@@ -1,1 +1,92 @@
-@{ViewData["Title"]="Welcome";}<section class="hero"><div><span class="eyebrow">ASP.NET Core MVC demo</span><h1>Simple banking, clearly organized.</h1><p>Practice Identity, Entity Framework Core, SQLite, authorization, account ownership checks, transfers, and bill payments.</p><div class="actions"><a class="btn" asp-area="Identity" asp-page="/Account/Login">Sign in</a><a class="btn secondary" asp-area="Identity" asp-page="/Account/Register">Create account</a></div><p class="demo"></div><div class="hero-card"><p>Demo balance</p><strong>$11,050.75</strong><small>Across checking and savings</small></div></section>
+@{
+    ViewData["Title"] = "Banking that shows its work";
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <partial name="_Head" />
+</head>
+<body data-auth="0" class="landing-body">
+    <partial name="_Icons" />
+    <header class="landing-nav">
+        <a class="brand" href="/"><img class="brand-mark" src="~/img/favicon.svg" alt="" /><span>SimpleBank</span></a>
+        <nav class="row">
+            <button type="button" class="icon-btn theme-toggle" data-theme-toggle aria-label="Toggle dark mode">
+                <svg class="icon sun" aria-hidden="true"><use href="#i-sun" /></svg>
+                <svg class="icon moon" aria-hidden="true"><use href="#i-moon" /></svg>
+            </button>
+            <a class="btn btn-ghost" asp-controller="Account" asp-action="Login">Sign in</a>
+            <a class="btn btn-primary" asp-controller="Account" asp-action="Register">Open an account</a>
+        </nav>
+    </header>
+
+    <main id="main">
+        <section class="hero">
+            <div class="hero-copy">
+                <h1>Banking that shows its work.</h1>
+                <p>Checking, savings and goal accounts with a ledger you can read line by line. Pay friends by their handle, split the bill, and watch your balance move in real time.</p>
+                <div class="row row-wrap">
+                    <a class="btn btn-primary btn-lg" asp-controller="Account" asp-action="Register">Open an account</a>
+                    <a class="btn btn-secondary btn-lg" asp-controller="Account" asp-action="Login">Try the demo</a>
+                </div>
+            </div>
+            <div class="hero-art" aria-hidden="true">
+                <div class="note note-hero">
+                    <svg class="note-rosette" viewBox="-100 -100 200 200">@Ui.Rosette()</svg>
+                    <svg class="note-waves" viewBox="0 0 400 60" preserveAspectRatio="none">@Ui.Waves()</svg>
+                    <div class="note-frame"></div>
+                    <div class="note-content">
+                        <span class="note-label">Total balance</span>
+                        <span class="note-amount num"><span class="note-cur">$</span><span data-countup-int="12480">0</span><sup>.36</sup></span>
+                        <span class="note-meta">3 accounts</span>
+                    </div>
+                    <span class="note-denom">SB</span>
+                </div>
+                <div class="float-card fc-1">
+                    <span class="tx-icon cat-People">@Ui.Icon("users", "icon-sm")</span>
+                    <div><strong>Alice Chen sent you $24.50</strong><small>“Lunch at Noodle House”</small></div>
+                </div>
+                <div class="float-card fc-2">
+                    <span class="tx-icon cat-Income">@Ui.Icon("briefcase", "icon-sm")</span>
+                    <div><strong>Payroll deposited</strong><small class="pos num">+$2,350.00</small></div>
+                </div>
+            </div>
+        </section>
+
+        <section class="features" aria-label="What you can do">
+            <article class="feature feature-wide">
+                @Ui.Icon("send", "icon-lg")
+                <h2>Send money by handle</h2>
+                <p>Type <strong>@@alice</strong>, enter an amount and it lands in her primary account instantly. Request money back and she can pay with one tap.</p>
+            </article>
+            <article class="feature">
+                @Ui.Icon("chart", "icon-lg")
+                <h2>See where it goes</h2>
+                <p>Spending by category, income against outgoings, and your balance over 30, 90 or 180 days.</p>
+            </article>
+            <article class="feature">
+                @Ui.Icon("target", "icon-lg")
+                <h2>Save toward something</h2>
+                <p>Open a goal account, set a target and track progress as you move money in.</p>
+            </article>
+            <article class="feature">
+                @Ui.Icon("shield", "icon-lg")
+                <h2>Built like a ledger</h2>
+                <p>Every movement is a pair of entries that nets to zero, written in one database transaction.</p>
+            </article>
+        </section>
+    </main>
+
+    <footer class="landing-foot muted">
+        <span>SimpleBank is a class project. No real money moves here.</span>
+        <a href="/scalar">API reference</a>
+    </footer>
+    <script type="module" src="~/js/app.js" asp-append-version="true"></script>
+    <script type="module">
+        import { countUp } from "/js/ui.js";
+        document.querySelectorAll("[data-countup-int]").forEach((el) =>
+            setTimeout(() => countUp(el, +el.dataset.countupInt, { format: (n) => Math.round(n).toLocaleString("en-US"), duration: 1600 }), 500));
+    </script>
+</body>
+</html>

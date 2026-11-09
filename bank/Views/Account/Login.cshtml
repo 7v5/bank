@@ -1,0 +1,57 @@
+@model LoginViewModel
+@inject IWebHostEnvironment Env
+@{
+    ViewData["Title"] = "Sign in";
+    Layout = "_AuthLayout";
+}
+<div class="auth-card">
+    <h1>Welcome back</h1>
+    <p class="auth-lede">Sign in to see your accounts.</p>
+
+    <form asp-action="Login" method="post" class="form" novalidate>
+        <input type="hidden" asp-for="ReturnUrl" />
+        <div asp-validation-summary="ModelOnly" class="form-errors"></div>
+        <div class="field">
+            <label asp-for="Email">Email</label>
+            <div class="input-wrap">
+                @Ui.Icon("user")
+                <input asp-for="Email" class="input" autocomplete="username" autofocus placeholder="you@example.com" />
+            </div>
+            <span asp-validation-for="Email" class="field-error"></span>
+        </div>
+        <div class="field">
+            <label asp-for="Password">Password</label>
+            <div class="input-wrap">
+                @Ui.Icon("lock")
+                <input asp-for="Password" class="input" autocomplete="current-password" />
+                <button type="button" class="reveal" data-password-toggle aria-label="Show password">@Ui.Icon("eye", "icon-sm")</button>
+            </div>
+            <span asp-validation-for="Password" class="field-error"></span>
+        </div>
+        <label class="checkbox"><input asp-for="RememberMe" /> Keep me signed in</label>
+        <button type="submit" class="btn btn-primary btn-lg btn-block">Sign in</button>
+    </form>
+
+    <p class="auth-switch">New here? <a asp-action="Register">Open an account</a></p>
+
+    @if (Env.IsDevelopment())
+    {
+        <section class="demo-logins" aria-label="Demo accounts">
+            <h2>Demo accounts</h2>
+            <p class="muted">Every demo password is <strong class="num">@DbInitializer.DemoPassword</strong>. Tap one to fill the form.</p>
+            <div class="demo-list">
+                @foreach (var d in DbInitializer.DemoLogins)
+                {
+                    <button type="button" class="demo-login" data-email="@d.Email">
+                        <span class="avatar avatar-sm" style="--c:@(d.Role == "Admin" ? "#b8912a" : d.Name.StartsWith("Alice") ? "#e5484d" : "#5b5bd6")">@string.Concat(d.Name.Split(' ').Select(p => p[0]))</span>
+                        <span><strong>@d.Name</strong><small>@d.Email</small></span>
+                        @if (d.Role == "Admin") { <span class="chip chip-brass">Admin</span> }
+                    </button>
+                }
+            </div>
+        </section>
+    }
+</div>
+@section Scripts {
+    <script type="module" src="~/js/auth.js" asp-append-version="true"></script>
+}

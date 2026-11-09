@@ -1,0 +1,48 @@
+@* Layout for signed-out pages: login, register and errors. Form on the left, the engraved note on the right. *@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <partial name="_Head" />
+</head>
+<body data-auth="0" class="auth-body">
+    <partial name="_Icons" />
+    <div class="auth">
+        <div class="auth-form-col">
+            <header class="auth-top">
+                <a class="brand" href="/"><img class="brand-mark" src="~/img/favicon.svg" alt="" /><span>SimpleBank</span></a>
+                <button type="button" class="icon-btn theme-toggle" data-theme-toggle aria-label="Toggle dark mode">
+                    <svg class="icon sun" aria-hidden="true"><use href="#i-sun" /></svg>
+                    <svg class="icon moon" aria-hidden="true"><use href="#i-moon" /></svg>
+                </button>
+            </header>
+            <main id="main" class="auth-main">
+                @RenderBody()
+            </main>
+            <footer class="auth-foot muted">A class project. No real money moves here.</footer>
+        </div>
+        <aside class="auth-art" aria-hidden="true">
+            <div class="auth-art-inner">
+                <div class="note note-showcase">
+                    <svg class="note-rosette" viewBox="-100 -100 200 200">@Ui.Rosette()</svg>
+                    <svg class="note-waves" viewBox="0 0 400 60" preserveAspectRatio="none">@Ui.Waves()</svg>
+                    <div class="note-frame"></div>
+                    <div class="note-content">
+                        <span class="note-label">Total balance</span>
+                        <span class="note-amount num"><span class="note-cur">$</span>12,480<sup>.36</sup></span>
+                        <span class="note-meta">Checking, savings and a Japan trip fund</span>
+                    </div>
+                    <span class="note-denom">SB</span>
+                </div>
+                <div class="auth-art-copy">
+                    <h2>Every dollar, accounted for.</h2>
+                    <p>Send money to friends by handle, move it between accounts, and see where it goes each month.</p>
+                </div>
+            </div>
+        </aside>
+    </div>
+    <div class="toasts" aria-live="polite"></div>
+    <partial name="_Flash" />
+    <script type="module" src="~/js/app.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

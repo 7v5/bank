@@ -1,0 +1,54 @@
+@model RegisterViewModel
+@{
+    ViewData["Title"] = "Open an account";
+    Layout = "_AuthLayout";
+}
+<div class="auth-card">
+    <h1>Open an account</h1>
+    <p class="auth-lede">It takes a minute. You'll start with a free checking account.</p>
+
+    <form asp-action="Register" method="post" class="form" novalidate>
+        <div asp-validation-summary="ModelOnly" class="form-errors"></div>
+        <div class="field">
+            <label asp-for="FullName"></label>
+            <input asp-for="FullName" class="input" autocomplete="name" autofocus placeholder="Jordan Rivera" />
+            <span asp-validation-for="FullName" class="field-error"></span>
+        </div>
+        <div class="field">
+            <label asp-for="Handle"></label>
+            <div class="input-wrap handle-wrap">
+                <span class="handle-at" aria-hidden="true">@@</span>
+                <input asp-for="Handle" class="input" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="jordan" />
+            </div>
+            <span class="hint">Friends send you money with this.</span>
+            <span asp-validation-for="Handle" class="field-error"></span>
+        </div>
+        <div class="field">
+            <label asp-for="Email"></label>
+            <input asp-for="Email" class="input" autocomplete="email" placeholder="you@example.com" />
+            <span asp-validation-for="Email" class="field-error"></span>
+        </div>
+        <div class="field-row">
+            <div class="field">
+                <label asp-for="Password"></label>
+                <input asp-for="Password" class="input" autocomplete="new-password" data-strength="pw-meter" />
+                <span asp-validation-for="Password" class="field-error"></span>
+            </div>
+            <div class="field">
+                <label asp-for="ConfirmPassword"></label>
+                <input asp-for="ConfirmPassword" class="input" autocomplete="new-password" />
+                <span asp-validation-for="ConfirmPassword" class="field-error"></span>
+            </div>
+        </div>
+        <div class="pw-meter" id="pw-meter" data-score="0">
+            <div class="pw-bars"><span></span><span></span><span></span><span></span></div>
+            <span class="hint">At least 8 characters, with an uppercase letter and a number.</span>
+        </div>
+        <button type="submit" class="btn btn-primary btn-lg btn-block">Create account</button>
+    </form>
+
+    <p class="auth-switch">Already have an account? <a asp-action="Login">Sign in</a></p>
+</div>
+@section Scripts {
+    <script type="module" src="~/js/auth.js" asp-append-version="true"></script>
+}

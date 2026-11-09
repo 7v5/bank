@@ -1,0 +1,21 @@
+@* The six ways to move money. Used by the mobile "+" sheet, the dashboard and the Money hub. *@
+<div class="action-grid">
+    <a class="action" asp-area="" asp-controller="Money" asp-action="Send">
+        <span class="tx-icon">@Ui.Icon("send")</span>Send
+    </a>
+    <a class="action" asp-area="" asp-controller="Requests" asp-action="Create">
+        <span class="tx-icon">@Ui.Icon("request")</span>Request
+    </a>
+    <a class="action" asp-area="" asp-controller="Money" asp-action="Transfer">
+        <span class="tx-icon">@Ui.Icon("swap")</span>Transfer
+    </a>
+    <a class="action" asp-area="" asp-controller="Money" asp-action="Deposit">
+        <span class="tx-icon">@Ui.Icon("arrow-down")</span>Deposit
+    </a>
+    <a class="action" asp-area="" asp-controller="Money" asp-action="Withdraw">
+        <span class="tx-icon">@Ui.Icon("cash")</span>Withdraw
+    </a>
+    <a class="action" asp-area="" asp-controller="BillPay" asp-action="Pay">
+        <span class="tx-icon">@Ui.Icon("receipt")</span>Pay a bill
+    </a>
+</div>

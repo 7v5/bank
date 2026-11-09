@@ -1,1 +1,10 @@
-@{ViewData["Title"]="Error";}<div class="panel"><h1>Something went wrong</h1><p>Please return to the dashboard and try again.</p></div>
+@{
+    ViewData["Title"] = "Something went wrong";
+    Layout = User.Identity?.IsAuthenticated == true ? "_Layout" : "_AuthLayout";
+}
+<div class="status-page">
+    <div class="empty-icon status-icon">@Ui.Icon("alert", "icon-lg")</div>
+    <h1>Something went wrong</h1>
+    <p class="muted">We couldn't finish that request. No money was moved. Try again in a moment.</p>
+    <a class="btn btn-primary" href="/">Back to home</a>
+</div>

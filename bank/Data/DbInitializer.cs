@@ -68,7 +68,7 @@ public static class DbInitializer
         var poster = new LedgerPoster(db);
 
         // ---------- Users ----------
-        var admin = await CreateUserAsync(users, "admin@simplebank.local", "admin", "Morgan Blake", "#1f2937", now.AddDays(-200), AdminRole);
+        var admin = await CreateUserAsync(users, "admin@simplebank.local", "admin", "Morgan Blake", "#b8912a", now.AddDays(-200), AdminRole);
         var people = new List<(Persona P, ApplicationUser U)>();
         foreach (var p in Customers)
         {

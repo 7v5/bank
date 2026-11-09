@@ -78,6 +78,9 @@ builder.Services.AddScoped<IBankingService>(sp => sp.GetRequiredService<BankingS
 builder.Services.AddScoped<IMoneyRequestService, MoneyRequestService>();
 builder.Services.AddScoped<ITransactionQueryService, TransactionQueryService>();
 builder.Services.AddScoped<IInsightsService, InsightsService>();
+builder.Services.AddScoped<IAuditService, LoggerAuditService>();
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<SimpleBankMvc.Infrastructure.ShellContext>();
 
 var app = builder.Build();
 

@@ -1,0 +1,13 @@
+@* TempData messages become toasts on the next page (Post/Redirect/Get). *@
+@if (TempData["Success"] is string ok)
+{
+    <template data-flash="success" data-title="@ok">@(TempData["SuccessBody"] as string)</template>
+}
+@if (TempData["Error"] is string err)
+{
+    <template data-flash="error" data-title="@err">@(TempData["ErrorBody"] as string)</template>
+}
+@if (TempData["Info"] is string info)
+{
+    <template data-flash="info" data-title="@info"></template>
+}
