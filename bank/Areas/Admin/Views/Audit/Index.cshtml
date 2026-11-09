@@ -1,0 +1,24 @@
+@model PagedResult<AuditLog>
+@{
+    ViewData["Title"] = "Audit log";
+    var q = ViewBag.Q as string;
+}
+<div class="page-head"><div><h1>Audit log</h1><p>Sign-ins, registrations, password changes and every admin action, newest first.</p></div></div>
+<form method="get" class="admin-toolbar" role="search">
+    <div class="input-wrap">@Ui.Icon("search")<input class="input" type="search" name="q" value="@q" placeholder="Search actions, people or details" aria-label="Search audit log" /></div>
+    <button class="btn btn-secondary" type="submit">Search</button>
+</form>
+<section class="card card-pad">
+    <partial name="_AuditTable" model="Model.Items" />
+    @if (Model.TotalPages > 1)
+    {
+        <nav class="pager" aria-label="Pagination">
+            <span class="pager-info">Showing <strong class="num">@Model.FirstItem–@Model.LastItem</strong> of <strong class="num">@Model.TotalCount</strong></span>
+            <div class="pager-pages">
+                <a class="@(Model.HasPrevious ? "" : "disabled")" asp-route-q="@q" asp-route-page="@(Model.Page - 1)" aria-label="Previous page">@Ui.Icon("chevron-left", "icon-sm")</a>
+                <span aria-current="page">@Model.Page</span>
+                <a class="@(Model.HasNext ? "" : "disabled")" asp-route-q="@q" asp-route-page="@(Model.Page + 1)" aria-label="Next page">@Ui.Icon("chevron-right", "icon-sm")</a>
+            </div>
+        </nav>
+    }
+</section>

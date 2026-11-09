@@ -12,6 +12,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<MoneyRequest> MoneyRequests => Set<MoneyRequest>();
     public DbSet<Notification> Notifications => Set<Notification>();
     public DbSet<ProcessedRequest> ProcessedRequests => Set<ProcessedRequest>();
+    public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
 
     protected override void ConfigureConventions(ModelConfigurationBuilder c)
     {
@@ -58,6 +59,12 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
         {
             e.HasOne(x => x.User).WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Cascade);
             e.HasIndex(x => new { x.UserId, x.IsRead, x.CreatedUtc });
+        });
+
+        b.Entity<AuditLog>(e =>
+        {
+            e.HasIndex(x => x.CreatedUtc);
+            e.HasIndex(x => x.TargetId);
         });
     }
 }

@@ -1,0 +1,63 @@
+@model AdminStats
+@inject TimeProvider Clock
+@{
+    ViewData["Title"] = "Admin overview";
+    var recent = (List<AuditLog>)ViewBag.Recent;
+    var now = Clock.GetUtcNow().UtcDateTime;
+    var volume = Model.DailyVolume;
+}
+<div class="page-head">
+    <div><h1>Bank overview</h1><p>Customers, balances and activity across SimpleBank.</p></div>
+    <a class="btn btn-secondary" href="/scalar" target="_blank" rel="noopener">@Ui.Icon("code", "icon-sm")API reference</a>
+</div>
+
+<div class="kpis">
+    <div class="card card-pad kpi"><span class="kpi-label">@Ui.Icon("users", "icon-sm")Customers</span><strong class="num" data-countup="@Model.Customers" data-format="int">@Model.Customers</strong><span class="muted">+@Model.NewCustomers30d in 30 days</span></div>
+    <div class="card card-pad kpi"><span class="kpi-label">@Ui.Icon("vault", "icon-sm")Total deposits</span><strong class="num" data-countup="@Model.TotalDeposits">@Money.Format(Model.TotalDeposits)</strong><span class="muted">@Model.OpenAccounts open accounts</span></div>
+    <div class="card card-pad kpi"><span class="kpi-label">@Ui.Icon("swap", "icon-sm")30-day volume</span><strong class="num" data-countup="@Model.Volume30d">@Money.Format(Model.Volume30d)</strong><span class="muted">@Model.Transactions30d.ToString("N0") ledger lines</span></div>
+    <div class="card card-pad kpi"><span class="kpi-label">@Ui.Icon("alert", "icon-sm")Needs attention</span><strong class="num">@Model.FrozenAccounts</strong><span class="muted">frozen accounts, @Model.PendingRequests pending requests</span></div>
+</div>
+
+<div class="admin-grid">
+    <section class="card card-pad">
+        <div class="card-head"><h2>Money moved per day</h2><span class="muted">Last 30 days</span></div>
+        <div class="chart-box chart-tall"><div class="skeleton chart-skeleton"></div><canvas id="volume-chart" role="img" aria-label="Bar chart of daily money movement"></canvas></div>
+    </section>
+    <section class="card card-pad">
+        <div class="card-head"><h2>Deposits by account type</h2></div>
+        <ul class="legend type-legend">
+            @foreach (var t in Model.ByType)
+            {
+                var pct = Model.TotalDeposits == 0 ? 0 : (int)(t.Balance / Model.TotalDeposits * 100);
+                <li style="grid-template-columns:1fr auto">
+                    <span><strong>@t.Type</strong> <span class="muted">@t.Count accounts</span></span>
+                    <span class="v">@Money.Format(t.Balance)</span>
+                    <span class="progress" style="grid-column:1/-1"><span style="width:@pct%"></span></span>
+                </li>
+            }
+        </ul>
+    </section>
+</div>
+
+<section class="card card-pad" style="margin-top:var(--space-5)">
+    <div class="card-head"><h2>Recent admin and security events</h2><a class="link" asp-controller="Audit" asp-action="Index">Full audit log</a></div>
+    <partial name="_AuditTable" model="recent" />
+</section>
+
+@section Scripts {
+    <script src="~/lib/chart.js/chart.umd.min.js"></script>
+    <script type="module">
+        import { barChart, cssVar } from "/js/charts.js";
+        const data = @Json.Serialize(volume.Select(v => new { label = v.Day.ToString("MMM d"), volume = v.Volume }));
+        const canvas = document.getElementById("volume-chart");
+        let chart;
+        const draw = () => {
+            chart?.destroy();
+            chart = barChart(canvas, data.map(d => d.label), [{ label: "Money moved", values: data.map(d => d.volume), color: cssVar("--primary") }]);
+            chart.options.plugins.legend.display = false; chart.update("none");
+            canvas.closest(".chart-box").classList.add("ready");
+        };
+        document.fonts.ready.then(draw);
+        addEventListener("themechange", () => setTimeout(draw, 30));
+    </script>
+}

@@ -1,0 +1,34 @@
+@model TransactionResultsModel
+@{
+    ViewData["Title"] = "Ledger";
+    ViewData["DetailUrl"] = "/Admin/Ledger/Details/";
+    var q = Model.Query;
+}
+<div class="page-head"><div><h1>Ledger</h1><p>Every transaction across every customer. Transfers and payments appear as two lines that share a reference.</p></div></div>
+
+<form class="filters card card-pad" method="get" data-filter-form role="search" aria-label="Filter ledger">
+    <div class="filters-main">
+        <div class="input-wrap filters-search">@Ui.Icon("search")<input class="input" type="search" name="q" value="@q.Q" placeholder="Search customer, description or reference" aria-label="Search ledger" /></div>
+        <select name="type" class="select" style="width:auto" aria-label="Type">
+            <option value="">Any type</option>
+            @foreach (var t in Enum.GetValues<TransactionType>()) { <option value="@t" selected="@(q.Type == t)">@Ui.TypeLabel(t)</option> }
+        </select>
+        <select name="sort" class="select" style="width:auto" aria-label="Sort">
+            <option value="date_desc">Newest first</option>
+            <option value="amount_desc" selected="@(q.Sort == "amount_desc")">Largest amount</option>
+            <option value="amount_asc" selected="@(q.Sort == "amount_asc")">Smallest amount</option>
+            <option value="date_asc" selected="@(q.Sort == "date_asc")">Oldest first</option>
+        </select>
+        <select name="pageSize" class="select" style="width:auto" aria-label="Per page">
+            @foreach (var s in TransactionQuery.PageSizes) { <option value="@s" selected="@(q.PageSize == s)">@s per page</option> }
+        </select>
+    </div>
+</form>
+
+<section class="card card-pad results-card" data-results-host aria-live="polite">
+    <partial name="_TransactionResults" model="Model" />
+</section>
+<partial name="_TxDrawer" />
+@section Scripts {
+    <script type="module" src="~/js/transactions.js" asp-append-version="true"></script>
+}

@@ -1,0 +1,25 @@
+@model IEnumerable<AuditLog>
+@if (!Model.Any())
+{
+    <div class="empty"><div class="empty-icon">@Ui.Icon("history")</div><h3>No events yet</h3><p>Sign-ins and admin actions are recorded here.</p></div>
+}
+else
+{
+    <div class="table-wrap">
+        <table class="table">
+            <thead><tr><th>When</th><th>Who</th><th>Action</th><th class="hide-sm">Details</th><th class="hide-sm">IP</th></tr></thead>
+            <tbody>
+                @foreach (var a in Model)
+                {
+                    <tr>
+                        <td class="num" style="white-space:nowrap">@a.CreatedUtc.ToLocalTime().ToString("MMM d, h:mm tt", Money.Culture)</td>
+                        <td>@(a.ActorName ?? "System")</td>
+                        <td><span class="chip @(a.Action.StartsWith("account.") ? "chip-brass" : a.Action.Contains("lock") ? "chip-neg" : "chip-primary")">@a.Action</span></td>
+                        <td class="hide-sm">@a.Details</td>
+                        <td class="hide-sm num muted">@a.IpAddress</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

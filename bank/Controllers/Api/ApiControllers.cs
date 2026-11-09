@@ -195,3 +195,20 @@ public class AntiforgeryApiController(IAntiforgery antiforgery) : ApiBase
         return new AntiforgeryTokenDto(tokens.HeaderName!, tokens.RequestToken!);
     }
 }
+
+[Route("api/v1/admin"), Tags("Admin"), Authorize(Roles = DbInitializer.AdminRole)]
+public class AdminApiController(IAdminService admin) : ApiBase
+{
+    /// <summary>Bank-wide KPIs and 30-day volume. Admin role only.</summary>
+    [HttpGet("stats")]
+    public async Task<object> Stats()
+    {
+        var s = await admin.StatsAsync();
+        return new
+        {
+            s.Customers, s.NewCustomers30d, s.OpenAccounts, s.TotalDeposits, s.Volume30d, s.Transactions30d, s.PendingRequests, s.FrozenAccounts,
+            DailyVolume = s.DailyVolume.Select(d => new { Date = d.Day, d.Volume, d.Count }),
+            ByAccountType = s.ByType.Select(t => new { t.Type, t.Balance, t.Count })
+        };
+    }
+}
