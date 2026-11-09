@@ -1,0 +1,1 @@
+namespace SimpleBankMvc.ViewModels;
