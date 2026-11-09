@@ -1,0 +1,75 @@
+@model SimpleBankMvc.Controllers.ProfileViewModel
+@{
+    ViewData["Title"] = "Profile";
+    var pw = (SimpleBankMvc.Controllers.ChangePasswordViewModel)ViewBag.Password;
+}
+<div class="page-head"><div><h1>Profile &amp; settings</h1><p>Member since @Model.CreatedUtc.ToLocalTime().ToString("MMMM yyyy", Money.Culture).</p></div></div>
+
+<div class="profile-grid">
+    <form asp-action="Index" method="post" class="card card-pad form" novalidate>
+        <h2>Your details</h2>
+        <div asp-validation-summary="ModelOnly" class="form-errors"></div>
+        <div class="field">
+            <label>Email</label>
+            <input class="input" value="@Model.Email" disabled />
+        </div>
+        <div class="field">
+            <label asp-for="FullName"></label>
+            <input asp-for="FullName" class="input" />
+            <span asp-validation-for="FullName" class="field-error"></span>
+        </div>
+        <div class="field">
+            <label asp-for="Handle"></label>
+            <div class="input-wrap handle-wrap">
+                <span class="handle-at" aria-hidden="true">&#64;</span>
+                <input asp-for="Handle" class="input" autocapitalize="off" spellcheck="false" />
+            </div>
+            <span class="hint">People send you money with this.</span>
+            <span asp-validation-for="Handle" class="field-error"></span>
+        </div>
+        <fieldset class="field" style="border:0;padding:0;margin:0">
+            <legend class="label" style="margin-bottom:6px">Appearance</legend>
+            <div class="theme-options">
+                @foreach (var (v, label, icon) in new[] { ("light", "Light", "sun"), ("dark", "Dark", "moon"), ("system", "Match device", "sliders") })
+                {
+                    <label class="type-option">
+                        <input type="radio" name="ThemePreference" value="@v" checked="@(Model.ThemePreference == v)" data-theme-pref />
+                        <span class="type-card">@Ui.Icon(icon)<strong>@label</strong></span>
+                    </label>
+                }
+            </div>
+        </fieldset>
+        <button type="submit" class="btn btn-primary">Save profile</button>
+    </form>
+
+    <form asp-action="ChangePassword" method="post" class="card card-pad form" novalidate>
+        <h2>Change password</h2>
+        <div class="field">
+            <label for="Password_CurrentPassword">Current password</label>
+            <input id="Password_CurrentPassword" name="Password.CurrentPassword" type="password" class="input" autocomplete="current-password" required />
+        </div>
+        <div class="field">
+            <label for="Password_NewPassword">New password</label>
+            <input id="Password_NewPassword" name="Password.NewPassword" type="password" class="input" autocomplete="new-password" minlength="8" required />
+            <span class="hint">At least 8 characters, with an uppercase letter and a number.</span>
+        </div>
+        <div class="field">
+            <label for="Password_ConfirmPassword">Confirm new password</label>
+            <input id="Password_ConfirmPassword" name="Password.ConfirmPassword" type="password" class="input" autocomplete="new-password" required />
+        </div>
+        <button type="submit" class="btn btn-secondary">Change password</button>
+    </form>
+</div>
+@section Scripts {
+    <script type="module">
+        // Picking a theme previews it immediately; saving stores it on the profile.
+        document.querySelectorAll("[data-theme-pref]").forEach((r) => r.addEventListener("change", () => {
+            const v = r.value;
+            localStorage.removeItem("sb-theme");
+            if (v !== "system") localStorage.setItem("sb-theme", v);
+            const dark = v === "dark" || (v === "system" && matchMedia("(prefers-color-scheme: dark)").matches);
+            document.documentElement.dataset.theme = dark ? "dark" : "light";
+            dispatchEvent(new CustomEvent("themechange"));
+        }));
+    </script>
+}

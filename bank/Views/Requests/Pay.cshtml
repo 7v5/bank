@@ -1,0 +1,43 @@
+@model SimpleBankMvc.Controllers.PayRequestViewModel
+@{
+    var r = Model.Request!;
+    ViewData["Title"] = $"Pay {r.Requester.FirstName}";
+}
+<a class="back-link" asp-action="Index">@Ui.Icon("arrow-left", "icon-sm") Requests</a>
+<div class="narrow">
+    <form asp-action="Pay" asp-route-id="@r.Id" method="post" class="card flow-card form" novalidate>
+        <input type="hidden" asp-for="IdempotencyKey" />
+        <div class="review">
+            <span class="avatar avatar-lg" style="--c:@r.Requester.AvatarColor;margin:0 auto 8px">@r.Requester.Initials</span>
+            <span class="muted">@r.Requester.FullName requested</span>
+            <div class="review-amount num">@Money.Format(r.Amount)</div>
+            @if (r.Note is not null) { <p class="request-note">“@r.Note”</p> }
+        </div>
+        <div asp-validation-summary="ModelOnly" class="form-errors"></div>
+        @if (r.Status != MoneyRequestStatus.Pending)
+        {
+            <div class="alert alert-info">@Ui.Icon("info")<span>This request is already @r.Status.ToString().ToLowerInvariant().</span></div>
+        }
+        else
+        {
+            <fieldset class="acct-pick-group">
+                <legend class="label">Pay from</legend>
+                @foreach (var a in Model.Accounts)
+                {
+                    <label class="acct-pick @(a.IsFrozen ? "is-frozen" : "")">
+                        <input type="radio" name="FromAccountId" value="@a.Id" checked="@(Model.FromAccountId == a.Id)" disabled="@a.IsFrozen" />
+                        <span class="acct-pick-card">
+                            <span class="acct-icon">@Ui.Icon(a.Type == AccountType.Goal ? "target" : Ui.AccountIcon(a), "icon-sm")</span>
+                            <span class="acct-pick-main"><strong>@a.Name</strong><small class="muted">@a.MaskedNumber</small></span>
+                            <span class="num acct-pick-bal">@Money.Format(a.Balance)</span>
+                        </span>
+                    </label>
+                }
+            </fieldset>
+            <div class="flow-actions">
+                <a class="btn btn-secondary btn-lg" asp-action="Index">Not now</a>
+                <button type="submit" class="btn btn-primary btn-lg">Pay @Money.Format(r.Amount)</button>
+            </div>
+        }
+    </form>
+</div>

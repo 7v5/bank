@@ -1,0 +1,72 @@
+@inject TimeProvider Clock
+@{
+    ViewData["Title"] = "Requests";
+    var tab = (string)ViewBag.Tab;
+    var incoming = (List<MoneyRequest>)ViewBag.Incoming;
+    var outgoing = (List<MoneyRequest>)ViewBag.Outgoing;
+    var now = Clock.GetUtcNow().UtcDateTime;
+    string StatusChip(MoneyRequestStatus s) => s switch
+    {
+        MoneyRequestStatus.Pending => "chip-warn",
+        MoneyRequestStatus.Paid => "chip-pos",
+        MoneyRequestStatus.Declined => "chip-neg",
+        _ => ""
+    };
+}
+<div class="page-head">
+    <div><h1>Requests</h1><p>Ask people to pay you back, and answer what they've asked of you.</p></div>
+    <a class="btn btn-primary" asp-action="Create">@Ui.Icon("request", "icon-sm")Request money</a>
+</div>
+
+<nav class="segmented tabs-seg" aria-label="Request lists">
+    <a asp-route-tab="incoming" aria-current="@(tab == "incoming" ? "page" : null)">To pay <span class="num">(@incoming.Count(r => r.Status == MoneyRequestStatus.Pending))</span></a>
+    <a asp-route-tab="outgoing" aria-current="@(tab == "outgoing" ? "page" : null)">Sent by you <span class="num">(@outgoing.Count(r => r.Status == MoneyRequestStatus.Pending))</span></a>
+</nav>
+
+<section class="card card-pad" style="margin-top:var(--space-4)">
+    @{ var list = tab == "incoming" ? incoming : outgoing; }
+    @if (list.Count == 0)
+    {
+        <div class="empty">
+            <div class="empty-icon">@Ui.Icon("request")</div>
+            <h3>@(tab == "incoming" ? "Nobody's waiting on you" : "You haven't requested money yet")</h3>
+            <p>@(tab == "incoming" ? "When someone requests money from you, it shows up here." : "Split a bill or get paid back by sending a request.")</p>
+            @if (tab == "outgoing") { <a class="btn btn-primary" asp-action="Create">Request money</a> }
+        </div>
+    }
+    else
+    {
+        <ul class="req-list">
+            @foreach (var r in list)
+            {
+                var other = tab == "incoming" ? r.Requester : r.Payer;
+                <li class="req-row @(r.Status == MoneyRequestStatus.Pending ? "" : "is-done")">
+                    <span class="avatar" style="--c:@other.AvatarColor">@other.Initials</span>
+                    <div class="req-main">
+                        <strong>@(tab == "incoming" ? $"{other.FullName} requested" : $"You asked {other.FullName}")</strong>
+                        <span class="muted">@(r.Note ?? "No note")</span>
+                        <span class="muted req-when">@Ui.Ago(r.CreatedUtc, now)</span>
+                    </div>
+                    <div class="req-side">
+                        <span class="req-amt num">@Money.Format(r.Amount)</span>
+                        <span class="chip @StatusChip(r.Status)">@r.Status</span>
+                    </div>
+                    @if (r.Status == MoneyRequestStatus.Pending)
+                    {
+                        <div class="req-actions">
+                            @if (tab == "incoming")
+                            {
+                                <form asp-action="Decline" asp-route-id="@r.Id" method="post"><button class="btn btn-ghost btn-sm" type="submit">Decline</button></form>
+                                <a class="btn btn-primary btn-sm" asp-action="Pay" asp-route-id="@r.Id">Pay</a>
+                            }
+                            else
+                            {
+                                <form asp-action="Cancel" asp-route-id="@r.Id" method="post"><button class="btn btn-ghost btn-sm" type="submit" data-confirm="Cancel this request?">Cancel request</button></form>
+                            }
+                        </div>
+                    }
+                </li>
+            }
+        </ul>
+    }
+</section>

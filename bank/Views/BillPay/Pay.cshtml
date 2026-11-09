@@ -1,0 +1,54 @@
+@model SimpleBankMvc.Controllers.BillPayViewModel
+@{
+    ViewData["Title"] = "Pay a bill";
+}
+<a class="back-link" asp-action="Index">@Ui.Icon("arrow-left", "icon-sm") Bill pay</a>
+<div class="narrow">
+    <div class="page-head"><div><h1>Pay a bill</h1></div></div>
+    @if (Model.Payees.Count == 0)
+    {
+        <div class="card empty"><h3>Add a payee first</h3><p>You need at least one saved payee.</p><a class="btn btn-primary" asp-action="AddPayee">Add a payee</a></div>
+    }
+    else
+    {
+        <form asp-action="Pay" method="post" class="card flow-card form" novalidate>
+            <input type="hidden" asp-for="IdempotencyKey" />
+            <div asp-validation-summary="ModelOnly" class="form-errors"></div>
+            <div class="field">
+                <label asp-for="PayeeId">Payee</label>
+                <select asp-for="PayeeId" class="select">
+                    <option value="">Choose a payee</option>
+                    @foreach (var p in Model.Payees) { <option value="@p.Id">@p.Name (@p.AccountReference)</option> }
+                </select>
+                <span asp-validation-for="PayeeId" class="field-error"></span>
+            </div>
+            <div class="amount-field">
+                <label for="Amount" class="sr-only">Amount</label>
+                <div class="amount-input-wrap">
+                    <span class="currency">$</span>
+                    <input asp-for="Amount" class="amount-input" type="text" inputmode="decimal" placeholder="0" autocomplete="off" value="@Model.Amount?.ToString("0.##")" />
+                </div>
+                <span asp-validation-for="Amount" class="field-error"></span>
+            </div>
+            <fieldset class="acct-pick-group">
+                <legend class="label">Pay from</legend>
+                @foreach (var a in Model.Accounts)
+                {
+                    <label class="acct-pick @(a.IsFrozen ? "is-frozen" : "")">
+                        <input type="radio" name="FromAccountId" value="@a.Id" checked="@(Model.FromAccountId == a.Id)" disabled="@a.IsFrozen" />
+                        <span class="acct-pick-card">
+                            <span class="acct-icon">@Ui.Icon(a.Type == AccountType.Goal ? "target" : Ui.AccountIcon(a), "icon-sm")</span>
+                            <span class="acct-pick-main"><strong>@a.Name</strong><small class="muted">@a.MaskedNumber</small></span>
+                            <span class="num acct-pick-bal">@Money.Format(a.Balance)</span>
+                        </span>
+                    </label>
+                }
+            </fieldset>
+            <div class="field">
+                <label asp-for="Memo">Note <span class="muted">(optional)</span></label>
+                <input asp-for="Memo" class="input" maxlength="140" placeholder="November bill" />
+            </div>
+            <button type="submit" class="btn btn-primary btn-lg btn-block">Pay bill</button>
+        </form>
+    }
+</div>

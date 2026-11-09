@@ -1,0 +1,36 @@
+@model SimpleBankMvc.Controllers.RequestMoneyViewModel
+@{
+    ViewData["Title"] = "Request money";
+}
+<a class="back-link" asp-action="Index">@Ui.Icon("arrow-left", "icon-sm") Requests</a>
+<div class="narrow">
+    <div class="page-head"><div><h1>Request money</h1><p>They'll get a notification and can pay you with one tap.</p></div></div>
+    <form asp-action="Create" method="post" class="card flow-card form" novalidate>
+        <div asp-validation-summary="ModelOnly" class="form-errors"></div>
+        <div class="field">
+            <label asp-for="Payer">From</label>
+            <div class="input-wrap">
+                @Ui.Icon("user")
+                <input asp-for="Payer" class="input" placeholder="&#64;handle or email" autocomplete="off" autocapitalize="off" spellcheck="false" autofocus />
+            </div>
+            <span class="hint">Try &#64;alice, &#64;bob, &#64;carol or &#64;dave.</span>
+            <span asp-validation-for="Payer" class="field-error"></span>
+        </div>
+        <div class="amount-field">
+            <label for="Amount" class="sr-only">Amount</label>
+            <div class="amount-input-wrap">
+                <span class="currency">$</span>
+                <input asp-for="Amount" class="amount-input" type="text" inputmode="decimal" placeholder="0" autocomplete="off" value="@Model.Amount?.ToString("0.##")" />
+            </div>
+            <span asp-validation-for="Amount" class="field-error"></span>
+            <div class="quick-amounts">
+                @foreach (var q in new[] { 10, 20, 50, 100 }) { <button type="button" data-amount="@q">$@q</button> }
+            </div>
+        </div>
+        <div class="field">
+            <label asp-for="Note">What's it for? <span class="muted">(optional)</span></label>
+            <input asp-for="Note" class="input" maxlength="140" placeholder="Concert tickets" />
+        </div>
+        <button type="submit" class="btn btn-primary btn-lg btn-block">Send request</button>
+    </form>
+</div>

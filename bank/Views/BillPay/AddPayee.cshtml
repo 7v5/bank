@@ -1,0 +1,28 @@
+@model SimpleBankMvc.Controllers.PayeeViewModel
+@{
+    ViewData["Title"] = "Add a payee";
+    var cats = new[] { TransactionCategory.Bills, TransactionCategory.Shopping, TransactionCategory.Transport, TransactionCategory.Entertainment, TransactionCategory.Other };
+}
+<a class="back-link" asp-action="Index">@Ui.Icon("arrow-left", "icon-sm") Bill pay</a>
+<div class="narrow">
+    <div class="page-head"><div><h1>Add a payee</h1><p>Save a company once, then pay it from any account.</p></div></div>
+    <form asp-action="AddPayee" method="post" class="card card-pad form" novalidate>
+        <div class="field">
+            <label asp-for="Name">Payee name</label>
+            <input asp-for="Name" class="input" placeholder="City Power &amp; Light" autofocus />
+            <span asp-validation-for="Name" class="field-error"></span>
+        </div>
+        <div class="field">
+            <label asp-for="AccountReference"></label>
+            <input asp-for="AccountReference" class="input num" placeholder="CPL-48213" />
+            <span asp-validation-for="AccountReference" class="field-error"></span>
+        </div>
+        <div class="field">
+            <label asp-for="Category">Category</label>
+            <select asp-for="Category" class="select">
+                @foreach (var c in cats) { <option value="@c">@c</option> }
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary btn-lg">Add payee</button>
+    </form>
+</div>

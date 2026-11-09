@@ -1,0 +1,34 @@
+@model List<Notification>
+@{
+    ViewData["Title"] = "Notifications";
+    var now = (DateTime)ViewBag.Now;
+}
+<div class="page-head">
+    <div><h1>Notifications</h1><p>Payments you receive, requests and account updates.</p></div>
+    @if (Model.Any(n => !n.IsRead))
+    {
+        <form asp-action="ReadAll" method="post"><button class="btn btn-secondary" type="submit">@Ui.Icon("check", "icon-sm")Mark all read</button></form>
+    }
+</div>
+<section class="card card-pad">
+    @if (Model.Count == 0)
+    {
+        <div class="empty"><div class="empty-icon">@Ui.Icon("bell")</div><h3>You're all caught up</h3><p>New activity will show up here.</p></div>
+    }
+    else
+    {
+        <div class="notif-page">
+            @foreach (var n in Model)
+            {
+                <a class="notif @(n.IsRead ? "" : "unread")" href="@(n.Link ?? "#")">
+                    <span class="tx-icon" style="--c:var(--primary)">@Ui.Icon(n.Icon, "icon-sm")</span>
+                    <span>
+                        <span class="notif-title" style="display:block">@n.Title</span>
+                        <span class="notif-body" style="display:block">@n.Body</span>
+                        <span class="notif-time" style="display:block">@Ui.Ago(n.CreatedUtc, now)</span>
+                    </span>
+                </a>
+            }
+        </div>
+    }
+</section>
