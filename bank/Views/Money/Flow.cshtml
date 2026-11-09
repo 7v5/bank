@@ -1,0 +1,147 @@
+@model MoneyFormViewModel
+@{
+    var (title, lede, cta, done) = Model.Kind switch
+    {
+        MoneyKind.Deposit => ("Deposit money", $"Add money to one of your accounts. Up to {Money.Format(BankingService.MaxCashAmount)} per deposit.", "Deposit", "deposit"),
+        MoneyKind.Withdraw => ("Withdraw cash", $"Take money out of an account. Up to {Money.Format(BankingService.MaxCashAmount)} per withdrawal.", "Withdraw", "withdraw"),
+        MoneyKind.Transfer => ("Transfer between accounts", "Move money between your own accounts. Transfers are instant.", "Transfer", "transfer"),
+        _ => ("Send money", "Pay anyone with a SimpleBank account using their handle or email.", "Send", "send"),
+    };
+    ViewData["Title"] = title;
+    var needsFrom = Model.Kind is MoneyKind.Withdraw or MoneyKind.Transfer or MoneyKind.Send;
+    var needsTo = Model.Kind is MoneyKind.Deposit or MoneyKind.Transfer;
+    var remaining = BankingService.DailySendLimit - Model.SentToday;
+    var quick = Model.Kind switch
+    {
+        MoneyKind.Deposit or MoneyKind.Withdraw => new[] { 20m, 50m, 100m, 500m },
+        MoneyKind.Send => new[] { 10m, 25m, 50m, 100m },
+        _ => new[] { 50m, 100m, 250m, 1000m }
+    };
+}
+<a class="back-link" asp-controller="Money" asp-action="Index">@Ui.Icon("arrow-left", "icon-sm") Move money</a>
+
+<div class="narrow flow" data-flow="@done">
+    <div class="page-head">
+        <div><h1>@title</h1><p>@lede</p></div>
+    </div>
+
+    <ol class="steps" aria-label="Progress">
+        <li class="is-current" data-step-dot="1"><span>1</span>Details</li>
+        <li data-step-dot="2"><span>2</span>Review</li>
+        <li data-step-dot="3"><span>@Ui.Icon("check", "icon-sm")</span>Done</li>
+    </ol>
+
+    <form asp-action="@Model.Kind" method="post" class="card flow-card" novalidate data-money-form data-no-loading>
+        <input type="hidden" asp-for="IdempotencyKey" />
+
+        @* ---------- Step 1: details ---------- *@
+        <div class="flow-step" data-step="1">
+            <div asp-validation-summary="ModelOnly" class="form-errors"></div>
+
+            @if (Model.Kind == MoneyKind.Send)
+            {
+                <div class="field recipient-field">
+                    <label for="Recipient">To</label>
+                    <div class="recipient-picked" data-recipient-picked hidden="@(Model.RecipientUser is null)">
+                        @if (Model.RecipientUser is { } ru)
+                        {
+                            <span class="avatar" style="--c:@ru.AvatarColor">@ru.Initials</span>
+                            <span><strong>@ru.FullName</strong><small class="muted">@@@ru.Handle</small></span>
+                        }
+                        <button type="button" class="btn btn-ghost btn-sm" data-recipient-clear>Change</button>
+                    </div>
+                    <div class="input-wrap recipient-search" data-recipient-search hidden="@(Model.RecipientUser is not null)">
+                        @Ui.Icon("search")
+                        <input asp-for="Recipient" class="input" placeholder="Search by name, &#64;handle or email" autocomplete="off" autocapitalize="off" spellcheck="false"
+                               role="combobox" aria-expanded="false" aria-controls="recipient-results" aria-autocomplete="list" />
+                        <ul class="recipient-results popover" id="recipient-results" role="listbox"></ul>
+                    </div>
+                    <span asp-validation-for="Recipient" class="field-error"></span>
+                </div>
+            }
+
+            <div class="amount-field">
+                <label for="Amount" class="sr-only">Amount</label>
+                <div class="amount-input-wrap">
+                    <span class="currency">$</span>
+                    <input asp-for="Amount" class="amount-input" type="text" inputmode="decimal" placeholder="0" autocomplete="off" value="@Model.Amount?.ToString("0.##")" />
+                </div>
+                <span asp-validation-for="Amount" class="field-error"></span>
+                @if (Model.Kind == MoneyKind.Send)
+                {
+                    <p class="hint">You can send <strong class="num">@Money.Format(Math.Max(0, remaining))</strong> more today (limit @Money.Format(BankingService.DailySendLimit) per 24 hours).</p>
+                }
+                <div class="quick-amounts">
+                    @foreach (var q in quick) { <button type="button" data-amount="@q">@Money.Format(q).Replace(".00", "")</button> }
+                </div>
+            </div>
+
+            <div class="acct-picks @(needsFrom && needsTo ? "two" : "")">
+                @if (needsFrom)
+                {
+                    <fieldset class="acct-pick-group">
+                        <legend class="label">From</legend>
+                        @foreach (var a in Model.Accounts)
+                        {
+                            <label class="acct-pick @(a.IsFrozen ? "is-frozen" : "")">
+                                <input type="radio" name="FromAccountId" value="@a.Id" checked="@(Model.FromAccountId == a.Id)" data-balance="@a.Balance.ToString(System.Globalization.CultureInfo.InvariantCulture)" data-name="@a.Name" disabled="@a.IsFrozen" />
+                                <span class="acct-pick-card">
+                                    <span class="acct-icon">@Ui.Icon(a.Type == AccountType.Goal ? "target" : Ui.AccountIcon(a), "icon-sm")</span>
+                                    <span class="acct-pick-main"><strong>@a.Name</strong><small class="muted">@(a.IsFrozen ? "Frozen" : a.MaskedNumber)</small></span>
+                                    <span class="num acct-pick-bal">@Money.Format(a.Balance)</span>
+                                </span>
+                            </label>
+                        }
+                    </fieldset>
+                }
+                @if (needsTo)
+                {
+                    <fieldset class="acct-pick-group">
+                        <legend class="label">To</legend>
+                        @foreach (var a in Model.Accounts)
+                        {
+                            <label class="acct-pick">
+                                <input type="radio" name="ToAccountId" value="@a.Id" checked="@(Model.ToAccountId == a.Id)" data-balance="@a.Balance.ToString(System.Globalization.CultureInfo.InvariantCulture)" data-name="@a.Name" />
+                                <span class="acct-pick-card">
+                                    <span class="acct-icon">@Ui.Icon(a.Type == AccountType.Goal ? "target" : Ui.AccountIcon(a), "icon-sm")</span>
+                                    <span class="acct-pick-main"><strong>@a.Name</strong><small class="muted">@a.MaskedNumber</small></span>
+                                    <span class="num acct-pick-bal">@Money.Format(a.Balance)</span>
+                                </span>
+                            </label>
+                        }
+                    </fieldset>
+                }
+            </div>
+
+            <div class="field">
+                <label asp-for="Memo">@(Model.Kind == MoneyKind.Send ? "What's it for?" : "Note") <span class="muted">(optional)</span></label>
+                <input asp-for="Memo" class="input" maxlength="140" placeholder="@(Model.Kind == MoneyKind.Send ? "Pizza night" : "Add a note")" />
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-lg btn-block" data-to-review>Review @cta.ToLowerInvariant()</button>
+        </div>
+
+        @* ---------- Step 2: review (shown by money-flow.js) ---------- *@
+        <div class="flow-step" data-step="2" hidden>
+            <div class="review">
+                <span class="muted">You're about to @done</span>
+                <div class="review-amount num" data-review-amount>$0.00</div>
+                <dl class="detail-list">
+                    @if (Model.Kind == MoneyKind.Send) { <dt>To</dt><dd data-review-recipient></dd> }
+                    @if (needsFrom) { <dt>From</dt><dd data-review-from></dd> }
+                    @if (needsTo) { <dt>@(Model.Kind == MoneyKind.Deposit ? "Into" : "To")</dt><dd data-review-to></dd> }
+                    <dt>Note</dt><dd data-review-memo></dd>
+                    <dt data-review-after-label>Balance after</dt><dd class="num" data-review-after></dd>
+                </dl>
+            </div>
+            <div class="flow-actions">
+                <button type="button" class="btn btn-secondary btn-lg" data-back>Edit</button>
+                <button type="submit" class="btn btn-primary btn-lg" data-confirm-submit>@cta <span class="num" data-cta-amount></span></button>
+            </div>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script type="module" src="~/js/money-flow.js" asp-append-version="true"></script>
+}

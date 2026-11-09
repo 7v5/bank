@@ -1,0 +1,24 @@
+@model Transaction
+@{
+    var showAccount = ViewData["ShowAccount"] as bool? ?? false;
+    var showOwner = ViewData["ShowOwner"] as bool? ?? false;
+    var sub = new List<string>();
+    if (showOwner) sub.Add(Model.BankAccount.Owner?.FullName ?? "");
+    sub.Add(Ui.TypeLabel(Model.Type));
+    if (showAccount) sub.Add(Model.BankAccount.Name);
+    sub.Add(Model.PostedUtc.ToLocalTime().ToString("h:mm tt", Money.Culture));
+    var isIn = Model.Amount > 0;
+}
+<li>
+    <button type="button" class="tx" data-tx="@Model.Id" aria-label="@Ui.TransactionTitle(Model), @Money.Signed(Model.Amount)">
+        <span class="tx-icon cat-@Model.Category">@Ui.Icon(Ui.TransactionIcon(Model))</span>
+        <span class="tx-main">
+            <span class="tx-title" style="display:block">@Ui.TransactionTitle(Model)</span>
+            <span class="tx-sub" style="display:block">@string.Join(", ", sub.Where(s => s.Length > 0))</span>
+        </span>
+        <span class="tx-amt @(isIn ? "in" : "")">
+            @Money.Signed(Model.Amount)
+            <small>@Money.Format(Model.BalanceAfter)</small>
+        </span>
+    </button>
+</li>

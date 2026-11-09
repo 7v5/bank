@@ -77,13 +77,16 @@ public static class DbInitializer
         }
 
         // ---------- Accounts ----------
-        var start = now.Date.AddDays(-182);
+        // Day boundaries are local midnight (expressed in UTC) so seeded times look natural on the local clock.
+        var tz = TimeZoneInfo.Local.GetUtcOffset(now);
+        var start = now.Date.AddDays(-182).Add(-tz);
         var accounts = new Dictionary<string, (BankAccount Checking, BankAccount Savings, BankAccount? Vault)>();
         foreach (var (p, u) in people)
         {
             var checking = NewAccount(u, "Everyday Checking", AccountType.Checking, true, start);
             var savings = NewAccount(u, "Emergency Savings", AccountType.Savings, false, start);
-            var vault = p.ExtraVault ? NewAccount(u, p.Handle == "jordan" ? "Japan Trip" : "New Car Fund", AccountType.Savings, false, start.AddDays(20)) : null;
+            var vault = p.ExtraVault ? NewAccount(u, p.Handle == "jordan" ? "Japan Trip" : "New Car Fund", AccountType.Goal, false, start.AddDays(20)) : null;
+            if (vault is not null) vault.GoalAmount = p.Handle == "jordan" ? 4500m : 12000m;
             foreach (var a in new[] { checking, savings, vault }.OfType<BankAccount>())
             {
                 a.AccountNumber = await BankingService.NewAccountNumberAsync(db, random);
@@ -120,7 +123,7 @@ public static class DbInitializer
             }
 
             // Monthly bills.
-            for (var m = new DateTime(start.Year, start.Month, 1, 0, 0, 0, DateTimeKind.Utc).AddMonths(1); m < now; m = m.AddMonths(1))
+            for (var m = new DateTime(start.Year, start.Month, 1, 0, 0, 0, DateTimeKind.Utc).AddMonths(1).Add(-tz); m < now; m = m.AddMonths(1))
             {
                 var month = m;
                 Bill(month.AddHours(10), checking, p.Rent, "Rent — Maple Court Apartments", "Maple Court Apartments", TransactionCategory.Bills);
@@ -132,7 +135,7 @@ public static class DbInitializer
             }
 
             // Everyday card spending.
-            for (var day = start.AddDays(1); day < now.Date.AddDays(1); day = day.AddDays(1))
+            for (var day = start.AddDays(1); day < now; day = day.AddDays(1))
             {
                 foreach (var (cat, merchants, min, max, perWeek) in Spending)
                 {
@@ -160,7 +163,7 @@ public static class DbInitializer
 
         // Person-to-person payments between friends.
         string[] notes = ["Pizza night", "Concert tickets", "Rent split", "Groceries", "Birthday gift", "Gas money", "Brunch", "Movie tickets", "Coffee", "Road trip"];
-        for (var day = start.AddDays(3); day < now.Date; day = day.AddDays(random.Next(2, 6)))
+        for (var day = start.AddDays(3); day < now.AddDays(-1); day = day.AddDays(random.Next(2, 6)))
         {
             var a = people[random.Next(people.Count)];
             var b = people[random.Next(people.Count)];

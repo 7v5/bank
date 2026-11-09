@@ -1,0 +1,152 @@
+@model DashboardViewModel
+@inject TimeProvider Clock
+@{
+    ViewData["Title"] = "Home";
+    var now = Clock.GetUtcNow().UtcDateTime;
+    var change = Model.BalanceChange30d;
+}
+<h1 class="sr-only">Home</h1>
+
+<div class="dash">
+    @* ---------- Signature: the banknote with total balance ---------- *@
+    <section class="note dash-note" aria-label="Total balance">
+        <svg class="note-rosette" viewBox="-100 -100 200 200" aria-hidden="true">@Ui.Rosette()</svg>
+        <svg class="note-waves" viewBox="0 0 400 60" preserveAspectRatio="none" aria-hidden="true">@Ui.Waves()</svg>
+        <div class="note-frame" aria-hidden="true"></div>
+        <div class="note-content">
+            <span class="note-label">Total balance across @Model.Accounts.Count @(Model.Accounts.Count == 1 ? "account" : "accounts")</span>
+            <span class="note-amount num" data-live-total="@Model.Total">
+                <span class="note-cur">$</span><span data-countup-dollars="@Math.Truncate(Model.Total)">@Ui.Dollars(Model.Total)</span><sup>.@Ui.Cents(Model.Total)</sup>
+            </span>
+            @if (change is not null)
+            {
+                <span class="note-change">@Ui.Icon(change >= 0 ? "arrow-up" : "arrow-down", "icon-sm")@Money.Signed(change.Value) in the last 30 days</span>
+            }
+            <div class="note-actions">
+                <a class="btn btn-note-solid" asp-controller="Money" asp-action="Send">@Ui.Icon("send", "icon-sm")Send</a>
+                <a class="btn btn-note" asp-controller="Money" asp-action="Transfer">@Ui.Icon("swap", "icon-sm")Transfer</a>
+                <a class="btn btn-note" asp-controller="Money" asp-action="Deposit">@Ui.Icon("arrow-down", "icon-sm")Deposit</a>
+                <a class="btn btn-note hide-sm" asp-controller="Requests" asp-action="Create">@Ui.Icon("request", "icon-sm")Request</a>
+            </div>
+        </div>
+        <span class="note-denom" aria-hidden="true">SB</span>
+    </section>
+
+    @* ---------- This month ---------- *@
+    <section class="card card-pad dash-month" aria-labelledby="month-h">
+        <div class="card-head"><h2 id="month-h">@now.ToLocalTime().ToString("MMMM", Money.Culture) so far</h2></div>
+        <div class="month-flow">
+            <div>
+                <span class="month-label">@Ui.Icon("arrow-down", "icon-sm") Money in</span>
+                <span class="month-value num pos" data-countup="@Model.MonthIn">@Money.Format(Model.MonthIn)</span>
+            </div>
+            <div>
+                <span class="month-label">@Ui.Icon("arrow-up", "icon-sm") Money out</span>
+                <span class="month-value num" data-countup="@Model.MonthOut">@Money.Format(Model.MonthOut)</span>
+            </div>
+        </div>
+        @{ var total = Model.MonthIn + Model.MonthOut; var inPct = total == 0 ? 50 : (int)(Model.MonthIn / total * 100); }
+        <div class="flow-bar" role="img" aria-label="Money in versus money out">
+            <span class="in" style="width:@inPct%"></span><span class="out"></span>
+        </div>
+        <p class="muted month-note">
+            @if (Model.MonthIn >= Model.MonthOut) { <text>You've brought in @Money.Format(Model.MonthIn - Model.MonthOut) more than you've spent.</text> }
+            else { <text>You've spent @Money.Format(Model.MonthOut - Model.MonthIn) more than came in.</text> }
+        </p>
+    </section>
+
+    @* ---------- Accounts ---------- *@
+    <section class="dash-accounts" aria-labelledby="acc-h">
+        <div class="section-head">
+            <h2 id="acc-h">Accounts</h2>
+            <a class="btn btn-ghost btn-sm" asp-controller="Accounts" asp-action="Open">@Ui.Icon("plus", "icon-sm")Open account</a>
+        </div>
+        <div class="acct-scroller">
+            @foreach (var a in Model.Accounts)
+            {
+                <partial name="_AccountCard" model="a" />
+            }
+        </div>
+    </section>
+
+    @* ---------- Charts ---------- *@
+    <section class="card card-pad dash-balance" aria-labelledby="bal-h">
+        <div class="card-head">
+            <h2 id="bal-h">Balance over time</h2>
+            <div class="segmented" role="tablist" data-range-for="balance-chart">
+                <button type="button" role="tab" data-value="30" aria-selected="true">30d</button>
+                <button type="button" role="tab" data-value="90" aria-selected="false">90d</button>
+                <button type="button" role="tab" data-value="180" aria-selected="false">6m</button>
+            </div>
+        </div>
+        <div class="chart-box chart-tall"><div class="skeleton chart-skeleton"></div><canvas id="balance-chart" aria-label="Line chart of total balance over time" role="img"></canvas></div>
+    </section>
+
+    <section class="card card-pad dash-spend" aria-labelledby="spend-h">
+        <div class="card-head">
+            <h2 id="spend-h">Spending this month</h2>
+            <a class="link" asp-controller="Transactions" asp-action="Index" asp-route-flow="out">See all</a>
+        </div>
+        <div class="donut-wrap">
+            <div class="chart-box chart-donut"><div class="skeleton chart-skeleton" style="border-radius:50%"></div><canvas id="spend-chart" aria-label="Donut chart of spending by category" role="img"></canvas>
+                <div class="donut-center"><span class="muted">Spent</span><strong class="num" data-spend-total>—</strong></div>
+            </div>
+            <ul class="legend" data-spend-legend></ul>
+        </div>
+    </section>
+
+    <section class="card card-pad dash-recent" aria-labelledby="recent-h">
+        <div class="card-head">
+            <h2 id="recent-h">Recent activity</h2>
+            <a class="link" asp-controller="Transactions" asp-action="Index">View all</a>
+        </div>
+        @if (Model.Recent.Count == 0)
+        {
+            <div class="empty"><div class="empty-icon">@Ui.Icon("list")</div><h3>No activity yet</h3><p>Make your first deposit to get started.</p><a class="btn btn-primary" asp-controller="Money" asp-action="Deposit">Deposit money</a></div>
+        }
+        else
+        {
+            <ul class="tx-list">
+                @foreach (var t in Model.Recent) { <partial name="_TransactionRow" model="t" view-data='new ViewDataDictionary(ViewData) { ["ShowAccount"] = true }' /> }
+            </ul>
+        }
+    </section>
+
+    <div class="dash-side">
+        @if (Model.PendingIncoming.Count > 0)
+        {
+            <section class="card card-pad" aria-labelledby="req-h">
+                <div class="card-head">
+                    <h2 id="req-h">Waiting on you</h2>
+                    <a class="link" asp-controller="Requests" asp-action="Index">All requests</a>
+                </div>
+                <ul class="req-mini">
+                    @foreach (var r in Model.PendingIncoming)
+                    {
+                        <li>
+                            <span class="avatar avatar-sm" style="--c:@r.Requester.AvatarColor">@r.Requester.Initials</span>
+                            <div class="req-mini-main">
+                                <strong>@r.Requester.FirstName requested <span class="num">@Money.Format(r.Amount)</span></strong>
+                                <small class="muted">@(r.Note ?? "No note")</small>
+                                <small class="muted">@Ui.Ago(r.CreatedUtc, now)</small>
+                            </div>
+                            <a class="btn btn-primary btn-sm" asp-controller="Requests" asp-action="Pay" asp-route-id="@r.Id">Pay</a>
+                        </li>
+                    }
+                </ul>
+            </section>
+        }
+        <section class="card card-pad" aria-labelledby="flow-h">
+            <div class="card-head"><h2 id="flow-h">In and out, last 6 months</h2></div>
+            <div class="chart-box chart-mid"><div class="skeleton chart-skeleton"></div><canvas id="cashflow-chart" aria-label="Bar chart of money in and out per month" role="img"></canvas></div>
+        </section>
+    </div>
+</div>
+
+<partial name="_TxDrawer" />
+
+@section Scripts {
+    <script src="~/lib/chart.js/chart.umd.min.js"></script>
+    <script type="module" src="~/js/dashboard.js" asp-append-version="true"></script>
+    <script type="module" src="~/js/transactions.js" asp-append-version="true"></script>
+}

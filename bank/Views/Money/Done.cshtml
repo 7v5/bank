@@ -1,0 +1,34 @@
+@model ReceiptViewModel
+@{
+    ViewData["Title"] = Model.Title;
+}
+<div class="narrow done">
+    <div class="done-check" aria-hidden="true">
+        <svg viewBox="0 0 80 80"><circle cx="40" cy="40" r="36" pathLength="1" /><path d="M24 41l11 11 21-23" pathLength="1" /></svg>
+    </div>
+    <h1>@Model.Title</h1>
+    <div class="done-amount num">@Money.Format(Model.Amount)</div>
+
+    <div class="card card-pad receipt">
+        <dl class="detail-list">
+            @if (Model.From is not null) { <dt>From</dt><dd>@Model.From</dd> }
+            @if (Model.To is not null) { <dt>To</dt><dd>@Model.To</dd> }
+            @if (!string.IsNullOrWhiteSpace(Model.Memo)) { <dt>Note</dt><dd>@Model.Memo</dd> }
+            <dt>When</dt><dd>@Model.PostedUtc.ToLocalTime().ToString("MMM d, yyyy 'at' h:mm tt", Money.Culture)</dd>
+            @if (Model.NewBalance is { } nb)
+            {
+                <dt>@(Model.Kind == "Deposit" ? "New balance" : "Remaining balance")</dt><dd class="num">@Money.Format(nb)</dd>
+            }
+            <dt>Reference</dt>
+            <dd><button type="button" class="btn btn-ghost btn-sm" data-copy="@Model.Reference" data-copy-label="@Model.Reference">@Model.Reference @Ui.Icon("copy", "icon-sm")</button></dd>
+        </dl>
+    </div>
+
+    <div class="flow-actions">
+        @if (Model.AccountId is { } id)
+        {
+            <a class="btn btn-secondary btn-lg" asp-controller="Accounts" asp-action="Details" asp-route-id="@id">View account</a>
+        }
+        <a class="btn btn-primary btn-lg" asp-controller="Dashboard" asp-action="Index">Done</a>
+    </div>
+</div>

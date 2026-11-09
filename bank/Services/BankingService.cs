@@ -17,7 +17,7 @@ public interface IBankingService
     Task<BankAccount> OpenAccountAsync(string userId, string name, AccountType type, decimal? goalAmount = null);
     Task CloseAccountAsync(string userId, int accountId);
     Task SetPrimaryAsync(string userId, int accountId);
-    Task RenameAsync(string userId, int accountId, string name);
+    Task RenameAsync(string userId, int accountId, string name, decimal? goalAmount = null);
 
     Task<ApplicationUser?> FindRecipientAsync(string query);
     Task<decimal> SentInLast24HoursAsync(string userId);
@@ -150,9 +150,12 @@ public class BankingService(ApplicationDbContext db, LedgerPoster poster, INotif
         var open = await db.BankAccounts.CountAsync(a => a.OwnerId == userId && a.IsActive);
         if (open >= MaxOpenAccounts) throw new BankingException($"You can have at most {MaxOpenAccounts} open accounts.");
 
+        if (type == AccountType.Goal && goalAmount is not > 0) throw new BankingException("Set a target amount for your goal.");
+        if (goalAmount is > MaxTransferAmount) throw new BankingException($"Goals can be at most {Money.Format(MaxTransferAmount)}.");
         var account = new BankAccount
         {
-            OwnerId = userId, Name = clean, Type = type, IsPrimary = open == 0,
+            OwnerId = userId, Name = clean, Type = type, IsPrimary = open == 0 && type != AccountType.Goal,
+            GoalAmount = type == AccountType.Goal ? decimal.Round(goalAmount!.Value, 2) : null,
             AccountNumber = await NewAccountNumberAsync(db, Random.Shared), OpenedUtc = Now
         };
         db.BankAccounts.Add(account);
@@ -182,15 +185,21 @@ public class BankingService(ApplicationDbContext db, LedgerPoster poster, INotif
     public Task SetPrimaryAsync(string userId, int accountId) => db.InTransactionAsync(async () =>
     {
         var target = await LoadOwnedAsync(userId, accountId);
+        if (target.Type == AccountType.Goal) throw new BankingException("Goal accounts can't be your primary account.");
         var all = await db.BankAccounts.Where(a => a.OwnerId == userId && a.IsActive).ToListAsync();
         foreach (var a in all) a.IsPrimary = a.Id == target.Id;
         return true;
     });
 
-    public async Task RenameAsync(string userId, int accountId, string name)
+    public async Task RenameAsync(string userId, int accountId, string name, decimal? goalAmount = null)
     {
         var account = await LoadOwnedAsync(userId, accountId);
         account.Name = Clean(name) ?? throw new BankingException("Give the account a name.");
+        if (account.Type == AccountType.Goal)
+        {
+            if (goalAmount is not > 0) throw new BankingException("Set a target amount for your goal.");
+            account.GoalAmount = decimal.Round(goalAmount.Value, 2);
+        }
         await db.SaveChangesAsync();
     }
 

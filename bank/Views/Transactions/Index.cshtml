@@ -1,0 +1,97 @@
+@model TransactionResultsModel
+@{
+    ViewData["Title"] = "Activity";
+    var q = Model.Query;
+    var accounts = (List<BankAccount>)ViewBag.Accounts;
+    var categories = Enum.GetValues<TransactionCategory>();
+    var types = Enum.GetValues<TransactionType>();
+}
+<div class="page-head">
+    <div><h1>Activity</h1><p>Every transaction across your accounts. Filter, search and sort to find what you need.</p></div>
+</div>
+
+<form class="filters card card-pad" method="get" data-filter-form role="search" aria-label="Filter transactions">
+    <div class="filters-main">
+        <div class="input-wrap filters-search">
+            @Ui.Icon("search")
+            <input class="input" type="search" name="q" value="@q.Q" placeholder="Search description, person or reference" aria-label="Search transactions" />
+        </div>
+        <div class="segmented" role="radiogroup" aria-label="Direction">
+            @foreach (var (value, label) in new[] { ("", "All"), ("in", "Money in"), ("out", "Money out") })
+            {
+                var selected = (q.Flow ?? "") == value;
+                <label role="radio" aria-checked="@selected.ToString().ToLowerInvariant()" aria-selected="@selected.ToString().ToLowerInvariant()" class="seg-radio">
+                    <input type="radio" name="flow" value="@value" checked="@selected" class="sr-only" />@label
+                </label>
+            }
+        </div>
+        <button type="button" class="btn btn-secondary filters-toggle" aria-expanded="@(q.AccountId is not null || q.Type is not null || q.From is not null || q.To is not null ? "true" : "false")" aria-controls="more-filters" data-filters-toggle>
+            @Ui.Icon("filter", "icon-sm")Filters
+        </button>
+    </div>
+
+    <div class="filters-more" id="more-filters" hidden="@(q.AccountId is null && q.Type is null && q.From is null && q.To is null)">
+        <div class="field">
+            <label for="f-account">Account</label>
+            <select id="f-account" name="accountId" class="select">
+                <option value="">All accounts</option>
+                @foreach (var a in accounts)
+                {
+                    <option value="@a.Id" selected="@(q.AccountId == a.Id)">@a.Name@(a.IsActive ? "" : " (closed)")</option>
+                }
+            </select>
+        </div>
+        <div class="field">
+            <label for="f-type">Type</label>
+            <select id="f-type" name="type" class="select">
+                <option value="">Any type</option>
+                @foreach (var t in types) { <option value="@t" selected="@(q.Type == t)">@Ui.TypeLabel(t)</option> }
+            </select>
+        </div>
+        <div class="field">
+            <label for="f-from">From</label>
+            <input id="f-from" type="date" name="from" class="input" value="@q.From?.ToString("yyyy-MM-dd")" />
+        </div>
+        <div class="field">
+            <label for="f-to">To</label>
+            <input id="f-to" type="date" name="to" class="input" value="@q.To?.ToString("yyyy-MM-dd")" />
+        </div>
+        <div class="field">
+            <label for="f-sort">Sort by</label>
+            <select id="f-sort" name="sort" class="select">
+                <option value="date_desc" selected="@(q.Sort is null or "date_desc")">Newest first</option>
+                <option value="date_asc" selected="@(q.Sort == "date_asc")">Oldest first</option>
+                <option value="amount_desc" selected="@(q.Sort == "amount_desc")">Largest amount</option>
+                <option value="amount_asc" selected="@(q.Sort == "amount_asc")">Smallest amount</option>
+            </select>
+        </div>
+        <div class="field">
+            <label for="f-size">Per page</label>
+            <select id="f-size" name="pageSize" class="select">
+                @foreach (var s in TransactionQuery.PageSizes) { <option value="@s" selected="@(q.PageSize == s)">@s</option> }
+            </select>
+        </div>
+    </div>
+
+    <div class="cat-chips" role="radiogroup" aria-label="Category">
+        <label class="cat-chip @(q.Category is null ? "on" : "")"><input type="radio" name="category" value="" checked="@(q.Category is null)" class="sr-only" />All categories</label>
+        @foreach (var c in categories)
+        {
+            <label class="cat-chip cat-@c @(q.Category == c ? "on" : "")">
+                <input type="radio" name="category" value="@c" checked="@(q.Category == c)" class="sr-only" />
+                @Ui.Icon(Ui.CategoryIcon(c), "icon-sm")@c
+            </label>
+        }
+    </div>
+    <noscript><button type="submit" class="btn btn-primary">Apply filters</button></noscript>
+</form>
+
+<section class="card card-pad results-card" aria-live="polite" aria-busy="false" data-results-host>
+    <partial name="_TransactionResults" model="Model" />
+</section>
+
+<partial name="_TxDrawer" />
+
+@section Scripts {
+    <script type="module" src="~/js/transactions.js" asp-append-version="true"></script>
+}

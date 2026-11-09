@@ -1,0 +1,54 @@
+@model OpenAccountViewModel
+@{
+    ViewData["Title"] = "Open an account";
+    var types = new[]
+    {
+        (Type: AccountType.Checking, Icon: "wallet", Title: "Checking", Body: "For everyday spending and bills."),
+        (Type: AccountType.Savings, Icon: "vault", Title: "Savings", Body: "Set money aside for emergencies."),
+        (Type: AccountType.Goal, Icon: "target", Title: "Goal", Body: "Save toward a target and track progress."),
+    };
+}
+<a class="back-link" asp-action="Index">@Ui.Icon("arrow-left", "icon-sm") Accounts</a>
+<div class="narrow">
+    <div class="page-head"><div><h1>Open an account</h1><p>New accounts start at $0.00. You can have up to @BankingService.MaxOpenAccounts open at once.</p></div></div>
+
+    <form asp-action="Open" method="post" class="form card card-pad" novalidate>
+        <div asp-validation-summary="ModelOnly" class="form-errors"></div>
+        <fieldset class="type-picker">
+            <legend class="label">Account type</legend>
+            @foreach (var t in types)
+            {
+                <label class="type-option">
+                    <input type="radio" name="Type" value="@t.Type" checked="@(Model.Type == t.Type)" data-goal-toggle />
+                    <span class="type-card">
+                        <span class="acct-icon">@Ui.Icon(t.Icon)</span>
+                        <strong>@t.Title</strong>
+                        <span class="muted">@t.Body</span>
+                    </span>
+                </label>
+            }
+        </fieldset>
+        <div class="field">
+            <label asp-for="Name">Account name</label>
+            <input asp-for="Name" class="input" placeholder="e.g. Rainy day fund" maxlength="60" autofocus />
+            <span asp-validation-for="Name" class="field-error"></span>
+        </div>
+        <div class="field" data-goal-field hidden="@(Model.Type != AccountType.Goal)">
+            <label asp-for="GoalAmount"></label>
+            <div class="input-wrap">
+                <span class="handle-at" aria-hidden="true">$</span>
+                <input asp-for="GoalAmount" class="input num" style="padding-left:30px" inputmode="decimal" placeholder="2,500.00" type="text" />
+            </div>
+            <span asp-validation-for="GoalAmount" class="field-error"></span>
+        </div>
+        <button type="submit" class="btn btn-primary btn-lg">Open account</button>
+    </form>
+</div>
+@section Scripts {
+    <script type="module">
+        const field = document.querySelector("[data-goal-field]");
+        document.querySelectorAll("[data-goal-toggle]").forEach((r) => r.addEventListener("change", () => {
+            field.hidden = document.querySelector("[data-goal-toggle]:checked").value !== "Goal";
+        }));
+    </script>
+}

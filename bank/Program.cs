@@ -35,6 +35,9 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(o =>
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultTokenProviders();
 
+// Re-check the security stamp on every request so locked or deleted users are signed out immediately.
+builder.Services.Configure<SecurityStampValidatorOptions>(o => o.ValidationInterval = TimeSpan.Zero);
+
 builder.Services.ConfigureApplicationCookie(o =>
 {
     o.Cookie.Name = "SimpleBank.Auth";

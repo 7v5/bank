@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace SimpleBankMvc.Models;
 
-public enum AccountType { Checking, Savings }
+public enum AccountType { Checking, Savings, Goal }
 
 public class BankAccount
 {
@@ -12,6 +12,9 @@ public class BankAccount
     [Required, MaxLength(80)] public string Name { get; set; } = "";
     public AccountType Type { get; set; }
     public decimal Balance { get; set; }
+
+    /// <summary>Target amount for Goal accounts (a savings vault working toward something).</summary>
+    public decimal? GoalAmount { get; set; }
 
     /// <summary>False once the account is closed. Closed accounts are hidden and cannot move money.</summary>
     public bool IsActive { get; set; } = true;
@@ -29,5 +32,6 @@ public class BankAccount
     public ApplicationUser Owner { get; set; } = null!;
     public ICollection<Transaction> Transactions { get; set; } = new List<Transaction>();
 
+    [NotMapped] public decimal? GoalProgress => GoalAmount is > 0 ? Math.Min(1m, Balance / GoalAmount.Value) : null;
     [NotMapped] public string MaskedNumber => AccountNumber.Length >= 4 ? $"•••• {AccountNumber[^4..]}" : AccountNumber;
 }

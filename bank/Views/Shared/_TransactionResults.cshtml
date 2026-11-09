@@ -1,0 +1,39 @@
+@model TransactionResultsModel
+@inject TimeProvider Clock
+@{
+    var r = Model.Results;
+    var now = Clock.GetUtcNow().UtcDateTime;
+    var byDate = string.IsNullOrEmpty(Model.Query.Sort) || Model.Query.Sort.StartsWith("date");
+    var rowData = new ViewDataDictionary(ViewData) { ["ShowAccount"] = Model.ShowAccount, ["ShowOwner"] = Model.ShowOwner };
+}
+<div class="tx-results" data-results data-total="@r.TotalCount">
+    @if (r.TotalCount == 0)
+    {
+        <div class="empty">
+            <div class="empty-icon">@Ui.Icon("search")</div>
+            <h3>@(Model.Query.HasFilters ? "No transactions match" : "No transactions yet")</h3>
+            <p>@(Model.Query.HasFilters ? "Try a wider date range or clear some filters." : "Deposits, transfers and payments will show up here.")</p>
+            @if (Model.Query.HasFilters)
+            {
+                <a class="btn btn-secondary" href="@Context.Request.Path" data-clear-filters>Clear filters</a>
+            }
+        </div>
+    }
+    else if (byDate)
+    {
+        @foreach (var day in r.Items.GroupBy(t => t.PostedUtc.ToLocalTime().Date))
+        {
+            <div class="tx-day">@Ui.DayLabel(day.Key, now.ToLocalTime())</div>
+            <ul class="tx-list">
+                @foreach (var t in day) { <partial name="_TransactionRow" model="t" view-data="rowData" /> }
+            </ul>
+        }
+    }
+    else
+    {
+        <ul class="tx-list">
+            @foreach (var t in r.Items) { <partial name="_TransactionRow" model="t" view-data="rowData" /> }
+        </ul>
+    }
+    <partial name="_Pager" model="Model" />
+</div>

@@ -1,0 +1,38 @@
+@{
+    ViewData["Title"] = "Move money";
+}
+<div class="page-head">
+    <div><h1>Move money</h1><p>Pay a friend, move money between your accounts, or add and take out cash.</p></div>
+</div>
+<div class="money-hub">
+    <a class="hub-item hub-primary" asp-action="Send">
+        <span class="tx-icon">@Ui.Icon("send", "icon-lg")</span>
+        <span><strong>Send money</strong><span>Pay anyone at SimpleBank by handle or email.</span></span>
+        @Ui.Icon("chevron-right")
+    </a>
+    <a class="hub-item" asp-controller="Requests" asp-action="Create">
+        <span class="tx-icon">@Ui.Icon("request", "icon-lg")</span>
+        <span><strong>Request money</strong><span>Ask someone to pay you back.</span></span>
+        @Ui.Icon("chevron-right")
+    </a>
+    <a class="hub-item" asp-action="Transfer">
+        <span class="tx-icon">@Ui.Icon("swap", "icon-lg")</span>
+        <span><strong>Transfer</strong><span>Between your own accounts, instantly.</span></span>
+        @Ui.Icon("chevron-right")
+    </a>
+    <a class="hub-item" asp-action="Deposit">
+        <span class="tx-icon">@Ui.Icon("arrow-down", "icon-lg")</span>
+        <span><strong>Deposit</strong><span>Add money to an account.</span></span>
+        @Ui.Icon("chevron-right")
+    </a>
+    <a class="hub-item" asp-action="Withdraw">
+        <span class="tx-icon">@Ui.Icon("cash", "icon-lg")</span>
+        <span><strong>Withdraw</strong><span>Take cash out of an account.</span></span>
+        @Ui.Icon("chevron-right")
+    </a>
+    <a class="hub-item" asp-controller="BillPay" asp-action="Index">
+        <span class="tx-icon">@Ui.Icon("receipt", "icon-lg")</span>
+        <span><strong>Pay a bill</strong><span>Utilities, rent and other saved payees.</span></span>
+        @Ui.Icon("chevron-right")
+    </a>
+</div>

@@ -477,16 +477,17 @@ p { margin: 0; }
 .tx-amt.in { color: var(--positive); }
 .tx-amt small { display: block; font-weight: 600; font-size: 0.78rem; color: var(--ink-3); }
 
-/* Category colors: one hue per category, reused by charts */
-.cat-Income { --c: #127a50; } .cat-Groceries { --c: #2f8f3a; } .cat-Dining { --c: #d9622b; }
-.cat-Bills { --c: #5b5bd6; } .cat-Shopping { --c: #c2418a; } .cat-Transport { --c: #0d84a8; }
-.cat-Entertainment { --c: #9a4fd1; } .cat-People { --c: #b8912a; } .cat-Transfer { --c: #64748b; }
-.cat-Cash { --c: #0e6e55; } .cat-Other { --c: #6b7a74; }
-[data-theme="dark"] .cat-Income { --c: #5ad6a0; } [data-theme="dark"] .cat-Groceries { --c: #7bd389; }
-[data-theme="dark"] .cat-Dining { --c: #ff9a62; } [data-theme="dark"] .cat-Bills { --c: #9b9bff; }
-[data-theme="dark"] .cat-Shopping { --c: #f07cbc; } [data-theme="dark"] .cat-Transport { --c: #5cc8e8; }
-[data-theme="dark"] .cat-Entertainment { --c: #c993f5; } [data-theme="dark"] .cat-People { --c: #e2c26a; }
-[data-theme="dark"] .cat-Transfer { --c: #9fb0c4; } [data-theme="dark"] .cat-Cash { --c: #4fd1a5; } [data-theme="dark"] .cat-Other { --c: #9aa9a2; }
+/* Category colors: one fixed hue per category (color follows the entity), reused by charts.
+   Spending hues are the validated dataviz categorical slots, stepped separately for dark mode. */
+.cat-Bills { --c: #2a78d6; } .cat-Dining { --c: #eb6834; } .cat-Groceries { --c: #1baf7a; }
+.cat-Transport { --c: #eda100; } .cat-Shopping { --c: #e87ba4; } .cat-People { --c: #008300; }
+.cat-Entertainment { --c: #6250d6; } .cat-Cash { --c: #e34948; }
+.cat-Income { --c: #127a50; } .cat-Transfer { --c: #64748b; } .cat-Other { --c: #8a8f8c; }
+[data-theme="dark"] .cat-Bills { --c: #3987e5; } [data-theme="dark"] .cat-Dining { --c: #d95926; }
+[data-theme="dark"] .cat-Groceries { --c: #199e70; } [data-theme="dark"] .cat-Transport { --c: #c98500; }
+[data-theme="dark"] .cat-Shopping { --c: #d55181; } [data-theme="dark"] .cat-People { --c: #3fae3f; }
+[data-theme="dark"] .cat-Entertainment { --c: #9085e9; } [data-theme="dark"] .cat-Cash { --c: #e66767; }
+[data-theme="dark"] .cat-Income { --c: #5ad6a0; } [data-theme="dark"] .cat-Transfer { --c: #9fb0c4; } [data-theme="dark"] .cat-Other { --c: #9aa9a2; }
 
 /* ---------- Table (admin & wide screens) ---------- */
 .table-wrap { overflow-x: auto; margin: 0 calc(-1 * clamp(16px, 2.2vw, 24px)); padding: 0 clamp(16px, 2.2vw, 24px); }

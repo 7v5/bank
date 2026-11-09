@@ -252,6 +252,9 @@ namespace SimpleBankMvc.Migrations
                     b.Property<DateTime?>("ClosedUtc")
                         .HasColumnType("TEXT");
 
+                    b.Property<long?>("GoalAmount")
+                        .HasColumnType("INTEGER");
+
                     b.Property<bool>("IsActive")
                         .HasColumnType("INTEGER");
 
