@@ -4,10 +4,10 @@
 }
 <a class="back-link" asp-action="Index">@Ui.Icon("arrow-left", "icon-sm") Bill pay</a>
 <div class="narrow">
-    <div class="page-head"><div><h1>Pay a bill</h1></div></div>
+    <div class="page-head"><div><h1>Pay a bill</h1><p>Choose a saved payee, enter the amount, and pick the account to pay from.</p></div></div>
     @if (Model.Payees.Count == 0)
     {
-        <div class="card empty"><h3>Add a payee first</h3><p>You need at least one saved payee.</p><a class="btn btn-primary" asp-action="AddPayee">Add a payee</a></div>
+        <div class="card empty"><div class="empty-icon">@Ui.Icon("building")</div><h3>Add a payee first</h3><p>Save the company you want to pay, then come back here.</p><a class="btn btn-primary" asp-action="AddPayee">Add a payee</a></div>
     }
     else
     {
@@ -23,9 +23,9 @@
                 <span asp-validation-for="PayeeId" class="field-error"></span>
             </div>
             <div class="amount-field">
-                <label for="Amount" class="sr-only">Amount</label>
-                <div class="amount-input-wrap">
-                    <span class="currency">$</span>
+                <label for="Amount" class="label">Amount</label>
+                <div class="amount-input-wrap" onclick="this.querySelector('input').focus()">
+                    <span class="currency" aria-hidden="true">$</span>
                     <input asp-for="Amount" class="amount-input" type="text" inputmode="decimal" placeholder="0" autocomplete="off" value="@Model.Amount?.ToString("0.##")" />
                 </div>
                 <span asp-validation-for="Amount" class="field-error"></span>
@@ -34,21 +34,21 @@
                 <legend class="label">Pay from</legend>
                 @foreach (var a in Model.Accounts)
                 {
-                    <label class="acct-pick @(a.IsFrozen ? "is-frozen" : "")">
+                    <label class="acct-pick @Ui.AccountTone(a.Type) @(a.IsFrozen ? "is-frozen" : "")">
                         <input type="radio" name="FromAccountId" value="@a.Id" checked="@(Model.FromAccountId == a.Id)" disabled="@a.IsFrozen" />
                         <span class="acct-pick-card">
-                            <span class="acct-icon">@Ui.Icon(a.Type == AccountType.Goal ? "target" : Ui.AccountIcon(a), "icon-sm")</span>
-                            <span class="acct-pick-main"><strong>@a.Name</strong><small class="muted">@a.MaskedNumber</small></span>
+                            <span class="acct-tile">@Ui.Icon(Ui.AccountIcon(a), "icon-sm")</span>
+                            <span class="acct-pick-main"><strong>@a.Name</strong><small class="muted num">@(a.IsFrozen ? "Frozen, can't pay from it" : $"{Ui.AccountTypeLabel(a.Type)} {a.MaskedNumber}")</small></span>
                             <span class="num acct-pick-bal">@Money.Format(a.Balance)</span>
                         </span>
                     </label>
                 }
             </fieldset>
             <div class="field">
-                <label asp-for="Memo">Note <span class="muted">(optional)</span></label>
-                <input asp-for="Memo" class="input" maxlength="140" placeholder="November bill" />
+                <label asp-for="Memo">Note <span class="optional">(optional)</span></label>
+                <input asp-for="Memo" class="input" maxlength="140" placeholder="For example, November bill" />
             </div>
-            <button type="submit" class="btn btn-primary btn-lg btn-block">Pay bill</button>
+            <button type="submit" class="btn btn-primary btn-lg btn-block">Pay this bill</button>
         </form>
     }
 </div>

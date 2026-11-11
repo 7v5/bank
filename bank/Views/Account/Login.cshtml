@@ -5,8 +5,8 @@
     Layout = "_AuthLayout";
 }
 <div class="auth-card">
-    <h1>Welcome back</h1>
-    <p class="auth-lede">Sign in to see your accounts.</p>
+    <h1>Sign in to online banking</h1>
+    <p class="auth-lede">Use the email and password you registered with.</p>
 
     <form asp-action="Login" method="post" class="form" novalidate>
         <input type="hidden" asp-for="ReturnUrl" />
@@ -24,7 +24,7 @@
             <div class="input-wrap">
                 @Ui.Icon("lock")
                 <input asp-for="Password" class="input" autocomplete="current-password" />
-                <button type="button" class="reveal" data-password-toggle aria-label="Show password">@Ui.Icon("eye", "icon-sm")</button>
+                <button type="button" class="reveal" data-password-toggle aria-label="Show password" aria-pressed="false">Show</button>
             </div>
             <span asp-validation-for="Password" class="field-error"></span>
         </div>
@@ -38,14 +38,14 @@
     {
         <section class="demo-logins" aria-label="Demo accounts">
             <h2>Demo accounts</h2>
-            <p class="muted">Every demo password is <strong class="num">@DbInitializer.DemoPassword</strong>. Tap one to fill the form.</p>
+            <p class="muted">Every demo password is <strong class="num">@DbInitializer.DemoPassword</strong>. Choose one to fill in the form, then select Sign in.</p>
             <div class="demo-list">
                 @foreach (var d in DbInitializer.DemoLogins)
                 {
                     <button type="button" class="demo-login" data-email="@d.Email">
-                        <span class="avatar avatar-sm" style="--c:@(d.Role == "Admin" ? "#b8912a" : d.Name.StartsWith("Alice") ? "#e5484d" : "#5b5bd6")">@string.Concat(d.Name.Split(' ').Select(p => p[0]))</span>
+                        <span class="avatar avatar-sm" style="--c:@(d.Role == "Admin" ? "var(--rule)" : d.Name.StartsWith("Alice") ? "var(--goal)" : "var(--checking)")">@string.Concat(d.Name.Split(' ').Select(p => p[0]))</span>
                         <span><strong>@d.Name</strong><small>@d.Email</small></span>
-                        @if (d.Role == "Admin") { <span class="chip chip-brass">Admin</span> }
+                        @if (d.Role == "Admin") { <span class="chip chip-tan">Admin</span> }
                     </button>
                 }
             </div>

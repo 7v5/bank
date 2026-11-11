@@ -4,32 +4,59 @@
     ViewData["Title"] = "Home";
     var now = Clock.GetUtcNow().UtcDateTime;
     var change = Model.BalanceChange30d;
+    var positiveTotal = Model.Accounts.Where(a => a.Balance > 0).Sum(a => a.Balance);
 }
 <h1 class="sr-only">Home</h1>
 
 <div class="dash">
-    @* ---------- Signature: the banknote with total balance ---------- *@
-    <section class="note dash-note" aria-label="Total balance">
-        <svg class="note-rosette" viewBox="-100 -100 200 200" aria-hidden="true">@Ui.Rosette()</svg>
-        <svg class="note-waves" viewBox="0 0 400 60" preserveAspectRatio="none" aria-hidden="true">@Ui.Waves()</svg>
-        <div class="note-frame" aria-hidden="true"></div>
-        <div class="note-content">
-            <span class="note-label">Total balance across @Model.Accounts.Count @(Model.Accounts.Count == 1 ? "account" : "accounts")</span>
-            <span class="note-amount num" data-live-total="@Model.Total">
-                <span class="note-cur">$</span><span data-countup-dollars="@Math.Truncate(Model.Total)">@Ui.Dollars(Model.Total)</span><sup>.@Ui.Cents(Model.Total)</sup>
-            </span>
+    @* ---------- Total balance: solid claret panel with the still rosette ---------- *@
+    <section class="balance-panel dash-total" aria-labelledby="total-h" data-live-total="@Model.Total">
+        <svg class="rosette" viewBox="-100 -100 200 200" aria-hidden="true">@Ui.Rosette()</svg>
+        <span class="balance-frame" aria-hidden="true"></span>
+        <h2 class="balance-label" id="total-h">Total balance, @Model.Accounts.Count @(Model.Accounts.Count == 1 ? "account" : "accounts")</h2>
+        <p class="balance-amount num">$<span data-total-dollars>@Ui.Dollars(Model.Total)</span><span class="cents" data-total-cents>.@Ui.Cents(Model.Total)</span></p>
+        <p class="balance-meta">
             @if (change is not null)
             {
-                <span class="note-change">@Ui.Icon(change >= 0 ? "arrow-up" : "arrow-down", "icon-sm")@Money.Signed(change.Value) in the last 30 days</span>
+                <span class="balance-change">@Ui.Icon(change >= 0 ? "arrow-up-right" : "arrow-down", "icon-sm")@Money.Signed(change.Value) in the last 30 days</span>
             }
-            <div class="note-actions">
-                <a class="btn btn-note-solid" asp-controller="Money" asp-action="Send">@Ui.Icon("send", "icon-sm")Send</a>
-                <a class="btn btn-note" asp-controller="Money" asp-action="Transfer">@Ui.Icon("swap", "icon-sm")Transfer</a>
-                <a class="btn btn-note" asp-controller="Money" asp-action="Deposit">@Ui.Icon("arrow-down", "icon-sm")Deposit</a>
-                <a class="btn btn-note hide-sm" asp-controller="Requests" asp-action="Create">@Ui.Icon("request", "icon-sm")Request</a>
+            <span>As of @now.ToLocalTime().ToString("MMM d, h:mm tt", Money.Culture)</span>
+        </p>
+        @if (positiveTotal > 0 && Model.Accounts.Count > 1)
+        {
+            <div class="split" role="img" aria-label="How your total is split: @string.Join(", ", Model.Accounts.Where(a => a.Balance > 0).Select(a => $"{a.Name} {(int)Math.Round(a.Balance / positiveTotal * 100)} percent"))">
+                @foreach (var a in Model.Accounts.Where(a => a.Balance > 0))
+                {
+                    <span class="@Ui.AccountTone(a.Type)" style="flex:@((a.Balance / positiveTotal).ToString("0.####", System.Globalization.CultureInfo.InvariantCulture))"></span>
+                }
             </div>
+            <ul class="split-legend">
+                @foreach (var a in Model.Accounts.Where(a => a.Balance > 0))
+                {
+                    <li class="@Ui.AccountTone(a.Type)"><i aria-hidden="true"></i>@a.Name</li>
+                }
+            </ul>
+        }
+        <div class="balance-actions">
+            <a class="pa pa-main" asp-controller="Money" asp-action="Send">@Ui.Icon("send", "icon-sm")Send money</a>
+            <a class="pa" asp-controller="Money" asp-action="Transfer">@Ui.Icon("swap", "icon-sm")Transfer</a>
+            <a class="pa" asp-controller="Money" asp-action="Deposit">@Ui.Icon("arrow-down", "icon-sm")Deposit</a>
+            <a class="pa" asp-controller="BillPay" asp-action="Pay">@Ui.Icon("receipt", "icon-sm")Pay a bill</a>
         </div>
-        <span class="note-denom" aria-hidden="true">SB</span>
+    </section>
+
+    @* ---------- Accounts ---------- *@
+    <section class="card dash-accounts" aria-labelledby="acc-h">
+        <div class="panel-head">
+            <h2 id="acc-h">Your accounts</h2>
+            <a asp-controller="Accounts" asp-action="Index">View all accounts</a>
+        </div>
+        <div class="acct-rows">
+            @foreach (var a in Model.Accounts) { <partial name="_AccountRow" model="a" /> }
+        </div>
+        <div class="panel-foot">
+            <a class="btn btn-ghost btn-sm" asp-controller="Accounts" asp-action="Open">@Ui.Icon("plus", "icon-sm")Open a new account</a>
+        </div>
     </section>
 
     @* ---------- This month ---------- *@
@@ -37,55 +64,41 @@
         <div class="card-head"><h2 id="month-h">@now.ToLocalTime().ToString("MMMM", Money.Culture) so far</h2></div>
         <div class="month-flow">
             <div>
-                <span class="month-label">@Ui.Icon("arrow-down", "icon-sm") Money in</span>
-                <span class="month-value num pos" data-countup="@Model.MonthIn">@Money.Format(Model.MonthIn)</span>
+                <span class="month-label">@Ui.Icon("arrow-down", "icon-sm")Money in</span>
+                <span class="month-value num @(Model.MonthIn > 0 ? "pos" : "")">@(Model.MonthIn == 0 ? Money.Format(0) : "+" + Money.Format(Model.MonthIn))</span>
             </div>
             <div>
-                <span class="month-label">@Ui.Icon("arrow-up", "icon-sm") Money out</span>
-                <span class="month-value num" data-countup="@Model.MonthOut">@Money.Format(Model.MonthOut)</span>
+                <span class="month-label">@Ui.Icon("arrow-up", "icon-sm")Money out</span>
+                <span class="month-value num">@(Model.MonthOut == 0 ? Money.Format(0) : "−" + Money.Format(Model.MonthOut))</span>
             </div>
         </div>
-        @{ var total = Model.MonthIn + Model.MonthOut; var inPct = total == 0 ? 50 : (int)(Model.MonthIn / total * 100); }
-        <div class="flow-bar" role="img" aria-label="Money in versus money out">
+        @{ var flowTotal = Model.MonthIn + Model.MonthOut; var inPct = flowTotal == 0 ? 50 : (int)(Model.MonthIn / flowTotal * 100); }
+        <div class="flow-bar" role="img" aria-label="Money in is @inPct percent of all money moved this month">
             <span class="in" style="width:@inPct%"></span><span class="out"></span>
         </div>
         <p class="muted month-note">
-            @if (Model.MonthIn >= Model.MonthOut) { <text>You've brought in @Money.Format(Model.MonthIn - Model.MonthOut) more than you've spent.</text> }
-            else { <text>You've spent @Money.Format(Model.MonthOut - Model.MonthIn) more than came in.</text> }
+            @if (Model.MonthIn >= Model.MonthOut) { <text>@Money.Format(Model.MonthIn - Model.MonthOut) more came in than went out.</text> }
+            else { <text>@Money.Format(Model.MonthOut - Model.MonthIn) more went out than came in.</text> }
         </p>
-    </section>
-
-    @* ---------- Accounts ---------- *@
-    <section class="dash-accounts" aria-labelledby="acc-h">
-        <div class="section-head">
-            <h2 id="acc-h">Accounts</h2>
-            <a class="btn btn-ghost btn-sm" asp-controller="Accounts" asp-action="Open">@Ui.Icon("plus", "icon-sm")Open account</a>
-        </div>
-        <div class="acct-scroller">
-            @foreach (var a in Model.Accounts)
-            {
-                <partial name="_AccountCard" model="a" />
-            }
-        </div>
     </section>
 
     @* ---------- Charts ---------- *@
     <section class="card card-pad dash-balance" aria-labelledby="bal-h">
         <div class="card-head">
-            <h2 id="bal-h">Balance over time</h2>
-            <div class="segmented" role="tablist" data-range-for="balance-chart">
-                <button type="button" role="tab" data-value="30" aria-selected="true">30d</button>
-                <button type="button" role="tab" data-value="90" aria-selected="false">90d</button>
-                <button type="button" role="tab" data-value="180" aria-selected="false">6m</button>
+            <h2 id="bal-h">Total balance over time</h2>
+            <div class="segmented" role="tablist" aria-label="Time range" data-range-for="balance-chart">
+                <button type="button" role="tab" data-value="30" aria-selected="true">30 days</button>
+                <button type="button" role="tab" data-value="90" aria-selected="false">90 days</button>
+                <button type="button" role="tab" data-value="180" aria-selected="false">6 months</button>
             </div>
         </div>
-        <div class="chart-box chart-tall"><div class="skeleton chart-skeleton"></div><canvas id="balance-chart" aria-label="Line chart of total balance over time" role="img"></canvas></div>
+        <div class="chart-box chart-tall"><div class="skeleton chart-skeleton"></div><canvas id="balance-chart" aria-label="Line chart of your total balance over time" role="img"></canvas></div>
     </section>
 
     <section class="card card-pad dash-spend" aria-labelledby="spend-h">
         <div class="card-head">
             <h2 id="spend-h">Spending this month</h2>
-            <a class="link" asp-controller="Transactions" asp-action="Index" asp-route-flow="out">See all</a>
+            <a class="link" asp-controller="Transactions" asp-action="Index" asp-route-flow="out">View spending</a>
         </div>
         <div class="donut-wrap">
             <div class="chart-box chart-donut"><div class="skeleton chart-skeleton" style="border-radius:50%"></div><canvas id="spend-chart" aria-label="Donut chart of spending by category" role="img"></canvas>
@@ -98,7 +111,7 @@
     <section class="card card-pad dash-recent" aria-labelledby="recent-h">
         <div class="card-head">
             <h2 id="recent-h">Recent activity</h2>
-            <a class="link" asp-controller="Transactions" asp-action="Index">View all</a>
+            <a class="link" asp-controller="Transactions" asp-action="Index">View all activity</a>
         </div>
         @if (Model.Recent.Count == 0)
         {
@@ -118,27 +131,26 @@
             <section class="card card-pad" aria-labelledby="req-h">
                 <div class="card-head">
                     <h2 id="req-h">Waiting on you</h2>
-                    <a class="link" asp-controller="Requests" asp-action="Index">All requests</a>
+                    <a class="link" asp-controller="Requests" asp-action="Index">View all requests</a>
                 </div>
                 <ul class="req-mini">
                     @foreach (var r in Model.PendingIncoming)
                     {
                         <li>
-                            <span class="avatar avatar-sm" style="--c:@r.Requester.AvatarColor">@r.Requester.Initials</span>
+                            <span class="avatar avatar-sm" style="--c:@r.Requester.AvatarColor" aria-hidden="true">@r.Requester.Initials</span>
                             <div class="req-mini-main">
-                                <strong>@r.Requester.FirstName requested <span class="num">@Money.Format(r.Amount)</span></strong>
-                                <small class="muted">@(r.Note ?? "No note")</small>
-                                <small class="muted">@Ui.Ago(r.CreatedUtc, now)</small>
+                                <strong>@r.Requester.FirstName asked for <span class="num">@Money.Format(r.Amount)</span></strong>
+                                <small class="muted">@(r.Note ?? "No note"), @Ui.Ago(r.CreatedUtc, now)</small>
                             </div>
-                            <a class="btn btn-primary btn-sm" asp-controller="Requests" asp-action="Pay" asp-route-id="@r.Id">Pay</a>
+                            <a class="btn btn-primary btn-sm" asp-controller="Requests" asp-action="Pay" asp-route-id="@r.Id" aria-label="Pay @r.Requester.FirstName @Money.Format(r.Amount)">Pay</a>
                         </li>
                     }
                 </ul>
             </section>
         }
         <section class="card card-pad" aria-labelledby="flow-h">
-            <div class="card-head"><h2 id="flow-h">In and out, last 6 months</h2></div>
-            <div class="chart-box chart-mid"><div class="skeleton chart-skeleton"></div><canvas id="cashflow-chart" aria-label="Bar chart of money in and out per month" role="img"></canvas></div>
+            <div class="card-head"><h2 id="flow-h">Money in and out, last 6 months</h2></div>
+            <div class="chart-box chart-mid"><div class="skeleton chart-skeleton"></div><canvas id="cashflow-chart" aria-label="Bar chart of money in and money out per month" role="img"></canvas></div>
         </section>
     </div>
 </div>

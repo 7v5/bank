@@ -1,6 +1,5 @@
-// Dashboard: the three charts (fed by /api/v1/insights), the balance count-up, and live balance refresh.
+// Dashboard: the three charts (fed by /api/v1/insights) and live balance refresh.
 import { api } from "./api.js";
-import { countUp } from "./ui.js";
 import { lineChart, donutChart, barChart, categoryColor, cssVar, fmt } from "./charts.js";
 
 const charts = {};
@@ -63,8 +62,8 @@ async function drawCashflow(force = false) {
   if (force || !cache.flow) cache.flow = (await api("insights/cashflow?months=6")).items;
   const m = cache.flow;
   swap("flow", () => barChart(canvas, m.map((x) => x.label), [
-    { label: "In", values: m.map((x) => x.moneyIn), color: cssVar("--positive") },
-    { label: "Out", values: m.map((x) => x.moneyOut), color: categoryColor("Transfer") }
+    { label: "Money in", values: m.map((x) => x.moneyIn), color: cssVar("--positive") },
+    { label: "Money out", values: m.map((x) => x.moneyOut), color: cssVar("--ink-3") }
   ]));
   ready(canvas);
 }
@@ -79,14 +78,12 @@ document.querySelector('[data-range-for="balance-chart"]')?.addEventListener("se
   drawBalance();
 });
 
-// Re-color charts when the theme flips (after the view transition has applied the new variables).
-addEventListener("themechange", () => setTimeout(() => drawAll(), 30));
-
-// The total on the banknote counts up on load.
-const dollars = document.querySelector("[data-countup-dollars]");
-if (dollars) countUp(dollars, Number(dollars.dataset.countupDollars), { format: (n) => Math.round(n).toLocaleString("en-US"), duration: 1300 });
+// Re-color charts when the theme flips.
+addEventListener("themechange", () => requestAnimationFrame(() => drawAll()));
 
 // Live refresh: when a new notification arrives (e.g. someone paid you), update balances in place.
+// Numbers are simply replaced; nothing counts or flashes.
+const usd = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
 document.addEventListener("bank:refresh", async () => {
   try {
     const { items } = await api("accounts");
@@ -95,16 +92,16 @@ document.addEventListener("bank:refresh", async () => {
       total += a.balance;
       const el = document.querySelector(`[data-account-id="${a.id}"] [data-balance]`);
       if (el && Number(el.dataset.balance) !== a.balance) {
-        countUp(el, a.balance, { from: Number(el.dataset.balance), duration: 900 });
+        el.textContent = usd.format(a.balance);
         el.dataset.balance = a.balance;
-        el.closest(".acct-card")?.animate([{ boxShadow: `0 0 0 3px ${cssVar("--primary")}` }, { boxShadow: "0 0 0 0 transparent" }], { duration: 1200 });
       }
     }
-    const note = document.querySelector("[data-live-total]");
-    if (note && Number(note.dataset.liveTotal) !== total) {
-      countUp(note.querySelector("[data-countup-dollars]"), Math.trunc(total), { from: Math.trunc(Number(note.dataset.liveTotal)), format: (n) => Math.round(n).toLocaleString("en-US") });
-      note.querySelector("sup").textContent = "." + String(Math.round((total % 1) * 100)).padStart(2, "0");
-      note.dataset.liveTotal = total;
+    const panel = document.querySelector("[data-live-total]");
+    if (panel && Number(panel.dataset.liveTotal) !== total) {
+      const [dollars, cents] = usd.format(Math.abs(total)).replace("$", "").split(".");
+      panel.querySelector("[data-total-dollars]").textContent = (total < 0 ? "−" : "") + dollars;
+      panel.querySelector("[data-total-cents]").textContent = "." + cents;
+      panel.dataset.liveTotal = total;
     }
     drawAll(true);
   } catch { /* ignore */ }

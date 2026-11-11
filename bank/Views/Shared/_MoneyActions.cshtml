@@ -1,21 +1,24 @@
-@* The six ways to move money. Used by the mobile "+" sheet, the dashboard and the Money hub. *@
-<div class="action-grid">
+@* Every way to move money, each with a one-line description. Used by the phone "Move" sheet. *@
+<nav class="action-grid" aria-label="Ways to move money">
     <a class="action" asp-area="" asp-controller="Money" asp-action="Send">
-        <span class="tx-icon">@Ui.Icon("send")</span>Send
+        <span class="tx-icon">@Ui.Icon("send")</span><span><strong>Send money</strong><small>Pay someone by @@handle or email</small></span>@Ui.Icon("chevron-right", "icon-sm")
     </a>
     <a class="action" asp-area="" asp-controller="Requests" asp-action="Create">
-        <span class="tx-icon">@Ui.Icon("request")</span>Request
+        <span class="tx-icon">@Ui.Icon("request")</span><span><strong>Request money</strong><small>Ask someone to pay you</small></span>@Ui.Icon("chevron-right", "icon-sm")
     </a>
     <a class="action" asp-area="" asp-controller="Money" asp-action="Transfer">
-        <span class="tx-icon">@Ui.Icon("swap")</span>Transfer
+        <span class="tx-icon">@Ui.Icon("swap")</span><span><strong>Transfer</strong><small>Between your own accounts</small></span>@Ui.Icon("chevron-right", "icon-sm")
     </a>
     <a class="action" asp-area="" asp-controller="Money" asp-action="Deposit">
-        <span class="tx-icon">@Ui.Icon("arrow-down")</span>Deposit
+        <span class="tx-icon">@Ui.Icon("arrow-down")</span><span><strong>Deposit</strong><small>Add money to an account</small></span>@Ui.Icon("chevron-right", "icon-sm")
     </a>
     <a class="action" asp-area="" asp-controller="Money" asp-action="Withdraw">
-        <span class="tx-icon">@Ui.Icon("cash")</span>Withdraw
+        <span class="tx-icon">@Ui.Icon("cash")</span><span><strong>Withdraw</strong><small>Take cash out of an account</small></span>@Ui.Icon("chevron-right", "icon-sm")
     </a>
     <a class="action" asp-area="" asp-controller="BillPay" asp-action="Pay">
-        <span class="tx-icon">@Ui.Icon("receipt")</span>Pay a bill
+        <span class="tx-icon">@Ui.Icon("receipt")</span><span><strong>Pay a bill</strong><small>Pay a saved payee</small></span>@Ui.Icon("chevron-right", "icon-sm")
     </a>
-</div>
+    <a class="action" asp-area="" asp-controller="BillPay" asp-action="Index">
+        <span class="tx-icon">@Ui.Icon("building")</span><span><strong>Manage payees</strong><small>Add or remove the companies you pay</small></span>@Ui.Icon("chevron-right", "icon-sm")
+    </a>
+</nav>

@@ -3,9 +3,9 @@
     ViewData["Title"] = "Open an account";
     var types = new[]
     {
-        (Type: AccountType.Checking, Icon: "wallet", Title: "Checking", Body: "For everyday spending and bills."),
-        (Type: AccountType.Savings, Icon: "vault", Title: "Savings", Body: "Set money aside for emergencies."),
-        (Type: AccountType.Goal, Icon: "target", Title: "Goal", Body: "Save toward a target and track progress."),
+        (Type: AccountType.Checking, Icon: "wallet", Title: "Checking", Body: "For everyday spending, paying people and bills."),
+        (Type: AccountType.Savings, Icon: "vault", Title: "Savings", Body: "Keep money set aside from what you spend."),
+        (Type: AccountType.Goal, Icon: "target", Title: "Goal", Body: "Save toward a target and track your progress."),
     };
 }
 <a class="back-link" asp-action="Index">@Ui.Icon("arrow-left", "icon-sm") Accounts</a>
@@ -18,10 +18,10 @@
             <legend class="label">Account type</legend>
             @foreach (var t in types)
             {
-                <label class="type-option">
+                <label class="type-option @Ui.AccountTone(t.Type)">
                     <input type="radio" name="Type" value="@t.Type" checked="@(Model.Type == t.Type)" data-goal-toggle />
                     <span class="type-card">
-                        <span class="acct-icon">@Ui.Icon(t.Icon)</span>
+                        <span class="type-card-top"><span class="acct-tile">@Ui.Icon(t.Icon)</span><span class="check">@Ui.Icon("check")</span></span>
                         <strong>@t.Title</strong>
                         <span class="muted">@t.Body</span>
                     </span>
@@ -30,14 +30,15 @@
         </fieldset>
         <div class="field">
             <label asp-for="Name">Account name</label>
-            <input asp-for="Name" class="input" placeholder="e.g. Rainy day fund" maxlength="60" autofocus />
+            <input asp-for="Name" class="input" placeholder="For example, Rainy day fund" maxlength="60" autofocus />
+            <span class="hint">Only you see this name.</span>
             <span asp-validation-for="Name" class="field-error"></span>
         </div>
         <div class="field" data-goal-field hidden="@(Model.Type != AccountType.Goal)">
             <label asp-for="GoalAmount"></label>
             <div class="input-wrap">
                 <span class="handle-at" aria-hidden="true">$</span>
-                <input asp-for="GoalAmount" class="input num" style="padding-left:30px" inputmode="decimal" placeholder="2,500.00" type="text" />
+                <input asp-for="GoalAmount" class="input num" style="padding-left:28px" inputmode="decimal" placeholder="2,500.00" type="text" />
             </div>
             <span asp-validation-for="GoalAmount" class="field-error"></span>
         </div>

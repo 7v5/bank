@@ -8,14 +8,14 @@
 }
 <div class="page-head">
     <div><h1>Bank overview</h1><p>Customers, balances and activity across SimpleBank.</p></div>
-    <a class="btn btn-secondary" href="/scalar" target="_blank" rel="noopener">@Ui.Icon("code", "icon-sm")API reference</a>
+    <a class="btn btn-secondary" href="/scalar" target="_blank" rel="noopener">@Ui.Icon("code", "icon-sm")API reference (opens in a new tab)</a>
 </div>
 
 <div class="kpis">
-    <div class="card card-pad kpi"><span class="kpi-label">@Ui.Icon("users", "icon-sm")Customers</span><strong class="num" data-countup="@Model.Customers" data-format="int">@Model.Customers</strong><span class="muted">+@Model.NewCustomers30d in 30 days</span></div>
-    <div class="card card-pad kpi"><span class="kpi-label">@Ui.Icon("vault", "icon-sm")Total deposits</span><strong class="num" data-countup="@Model.TotalDeposits">@Money.Format(Model.TotalDeposits)</strong><span class="muted">@Model.OpenAccounts open accounts</span></div>
-    <div class="card card-pad kpi"><span class="kpi-label">@Ui.Icon("swap", "icon-sm")30-day volume</span><strong class="num" data-countup="@Model.Volume30d">@Money.Format(Model.Volume30d)</strong><span class="muted">@Model.Transactions30d.ToString("N0") ledger lines</span></div>
-    <div class="card card-pad kpi"><span class="kpi-label">@Ui.Icon("alert", "icon-sm")Needs attention</span><strong class="num">@Model.FrozenAccounts</strong><span class="muted">frozen accounts, @Model.PendingRequests pending requests</span></div>
+    <div class="card card-pad kpi"><span class="kpi-label">@Ui.Icon("users", "icon-sm")Customers</span><strong class="num">@Model.Customers</strong><span class="muted">+@Model.NewCustomers30d in 30 days</span></div>
+    <div class="card card-pad kpi"><span class="kpi-label">@Ui.Icon("vault", "icon-sm")Total deposits</span><strong class="num">@Money.Format(Model.TotalDeposits)</strong><span class="muted">@Model.OpenAccounts open accounts</span></div>
+    <div class="card card-pad kpi"><span class="kpi-label">@Ui.Icon("swap", "icon-sm")30-day volume</span><strong class="num">@Money.Format(Model.Volume30d)</strong><span class="muted">@Model.Transactions30d.ToString("N0") ledger lines</span></div>
+    <div class="card card-pad kpi @(Model.FrozenAccounts > 0 ? "kpi-alert" : "")"><span class="kpi-label">@Ui.Icon("alert", "icon-sm")Needs attention</span><strong class="num">@Model.FrozenAccounts</strong><span class="muted">frozen accounts, @Model.PendingRequests pending requests</span></div>
 </div>
 
 <div class="admin-grid">
@@ -29,10 +29,10 @@
             @foreach (var t in Model.ByType)
             {
                 var pct = Model.TotalDeposits == 0 ? 0 : (int)(t.Balance / Model.TotalDeposits * 100);
-                <li style="grid-template-columns:1fr auto">
+                <li class="@Ui.AccountTone(t.Type)">
                     <span><strong>@t.Type</strong> <span class="muted">@t.Count accounts</span></span>
                     <span class="v">@Money.Format(t.Balance)</span>
-                    <span class="progress" style="grid-column:1/-1"><span style="width:@pct%"></span></span>
+                    <span class="progress" role="img" aria-label="@pct percent of deposits"><span style="width:@pct%"></span></span>
                 </li>
             }
         </ul>
@@ -40,7 +40,7 @@
 </div>
 
 <section class="card card-pad" style="margin-top:var(--space-5)">
-    <div class="card-head"><h2>Recent admin and security events</h2><a class="link" asp-controller="Audit" asp-action="Index">Full audit log</a></div>
+    <div class="card-head"><h2>Recent admin and security events</h2><a class="link" asp-controller="Audit" asp-action="Index">View the full audit log</a></div>
     <partial name="_AuditTable" model="recent" />
 </section>
 
@@ -58,6 +58,6 @@
             canvas.closest(".chart-box").classList.add("ready");
         };
         document.fonts.ready.then(draw);
-        addEventListener("themechange", () => setTimeout(draw, 30));
+        addEventListener("themechange", () => requestAnimationFrame(draw));
     </script>
 }

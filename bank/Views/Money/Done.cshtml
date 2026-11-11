@@ -3,13 +3,11 @@
     ViewData["Title"] = Model.Title;
 }
 <div class="narrow done">
-    <div class="done-check" aria-hidden="true">
-        <svg viewBox="0 0 80 80"><circle cx="40" cy="40" r="36" pathLength="1" /><path d="M24 41l11 11 21-23" pathLength="1" /></svg>
-    </div>
+    <div class="done-check" aria-hidden="true">@Ui.Icon("check")</div>
     <h1>@Model.Title</h1>
     <div class="done-amount num">@Money.Format(Model.Amount)</div>
 
-    <div class="card card-pad receipt">
+    <div class="card card-pad receipt" aria-label="Receipt">
         <dl class="detail-list">
             @if (Model.From is not null) { <dt>From</dt><dd>@Model.From</dd> }
             @if (Model.To is not null) { <dt>To</dt><dd>@Model.To</dd> }
@@ -20,7 +18,7 @@
                 <dt>@(Model.Kind == "Deposit" ? "New balance" : "Remaining balance")</dt><dd class="num">@Money.Format(nb)</dd>
             }
             <dt>Reference</dt>
-            <dd><button type="button" class="btn btn-ghost btn-sm" data-copy="@Model.Reference" data-copy-label="@Model.Reference">@Model.Reference @Ui.Icon("copy", "icon-sm")</button></dd>
+            <dd><button type="button" class="btn btn-ghost btn-sm" data-copy="@Model.Reference" data-copy-label="@Model.Reference" aria-label="Copy reference @Model.Reference"><span class="num">@Model.Reference</span>@Ui.Icon("copy", "icon-sm")</button></dd>
         </dl>
     </div>
 
@@ -29,6 +27,6 @@
         {
             <a class="btn btn-secondary btn-lg" asp-controller="Accounts" asp-action="Details" asp-route-id="@id">View account</a>
         }
-        <a class="btn btn-primary btn-lg" asp-controller="Dashboard" asp-action="Index">Done</a>
+        <a class="btn btn-primary btn-lg" asp-controller="Dashboard" asp-action="Index">Back to home</a>
     </div>
 </div>

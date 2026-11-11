@@ -14,10 +14,8 @@ export function initNotifications() {
 
   const setBadges = (count) => {
     document.querySelectorAll("[data-unread-badge]").forEach((b) => {
-      const prev = b.textContent;
       b.textContent = count > 9 ? "9+" : String(count);
       b.hidden = count === 0;
-      if (prev !== b.textContent && count > 0) { b.classList.remove("bump"); void b.offsetWidth; b.classList.add("bump"); }
     });
   };
 
@@ -36,14 +34,13 @@ export function initNotifications() {
       a.querySelector(".notif-title").textContent = n.title;
       a.querySelector(".notif-body").textContent = n.body;
       a.querySelector(".notif-time").textContent = n.ago;
-      a.querySelectorAll("span > span").forEach((s) => (s.style.display = "block"));
       a.addEventListener("click", () => { if (!n.isRead) api(`notifications/${n.id}/read`, { method: "POST" }).catch(() => {}); });
       list.append(a);
     }
   };
 
   panel.addEventListener("popover:open", async () => {
-    list.innerHTML = `<div style="padding:12px;display:grid;gap:10px">${'<div class="skeleton" style="height:52px"></div>'.repeat(3)}</div>`;
+    list.innerHTML = `<div style="padding:12px;display:grid;gap:10px" aria-label="Loading">${'<div class="skeleton" style="height:52px"></div>'.repeat(3)}</div>`;
     try { render((await api("notifications?take=12")).items); } catch { list.innerHTML = '<p class="muted" style="padding:16px">Couldn\'t load notifications.</p>'; }
   });
 

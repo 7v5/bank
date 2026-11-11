@@ -15,14 +15,13 @@ function show(n) {
   steps.forEach((s) => {
     const on = Number(s.dataset.step) === n;
     s.hidden = !on;
-    if (on) { s.classList.remove("step-in"); void s.offsetWidth; s.classList.add("step-in"); }
   });
   dots.forEach((d) => {
     const i = Number(d.dataset.stepDot);
     d.classList.toggle("is-current", i === n);
     d.classList.toggle("is-done", i < n);
   });
-  window.scrollTo({ top: 0, behavior: "smooth" });
+  window.scrollTo({ top: 0 });
 }
 
 const amount = () => parseFloat(amountInput.value || "0");
@@ -49,7 +48,7 @@ function validate() {
   if (form.querySelector('input[name="ToAccountId"]') && !to) { toast("error", "Choose an account to pay into"); ok = false; }
   if (from && to && from.value === to.value) { toast("error", "Pick two different accounts"); ok = false; }
   if (kind === "send" && !form.querySelector("#Recipient").value.trim()) { fieldError("Recipient", "Choose who to pay."); ok = false; }
-  if (!ok) { form.classList.remove("shake"); void form.offsetWidth; form.classList.add("shake"); }
+  if (!ok) form.querySelector(".field-error:not(:empty)")?.scrollIntoView({ block: "center" });
   return ok;
 }
 

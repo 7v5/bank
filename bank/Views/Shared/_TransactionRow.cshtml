@@ -10,7 +10,7 @@
     var isIn = Model.Amount > 0;
 }
 <li>
-    <button type="button" class="tx" data-tx="@Model.Id" aria-label="@Ui.TransactionTitle(Model), @Money.Signed(Model.Amount)">
+    <button type="button" class="tx" data-tx="@Model.Id" aria-label="@Ui.TransactionTitle(Model), @Money.Signed(Model.Amount). Show details">
         <span class="tx-icon cat-@Model.Category">@Ui.Icon(Ui.TransactionIcon(Model))</span>
         <span class="tx-main">
             <span class="tx-title" style="display:block">@Ui.TransactionTitle(Model)</span>

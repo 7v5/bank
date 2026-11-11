@@ -11,7 +11,8 @@
         <div asp-validation-summary="ModelOnly" class="form-errors"></div>
         <div class="field">
             <label>Email</label>
-            <input class="input" value="@Model.Email" disabled />
+            <input class="input" value="@Model.Email" disabled aria-describedby="email-hint" />
+            <span class="hint" id="email-hint">Your email is your sign-in name and can't be changed here.</span>
         </div>
         <div class="field">
             <label asp-for="FullName"></label>
@@ -24,11 +25,12 @@
                 <span class="handle-at" aria-hidden="true">&#64;</span>
                 <input asp-for="Handle" class="input" autocapitalize="off" spellcheck="false" />
             </div>
-            <span class="hint">People send you money with this.</span>
+            <span class="hint">People send you money with this. Changing it changes how they find you.</span>
             <span asp-validation-for="Handle" class="field-error"></span>
         </div>
         <fieldset class="field" style="border:0;padding:0;margin:0">
             <legend class="label" style="margin-bottom:6px">Appearance</legend>
+            <span class="hint" style="margin-top:-2px;margin-bottom:6px">Pick one to preview it. Select Save profile to keep it.</span>
             <div class="theme-options">
                 @foreach (var (v, label, icon) in new[] { ("light", "Light", "sun"), ("dark", "Dark", "moon"), ("system", "Match device", "sliders") })
                 {
@@ -57,7 +59,7 @@
             <label for="Password_ConfirmPassword">Confirm new password</label>
             <input id="Password_ConfirmPassword" name="Password.ConfirmPassword" type="password" class="input" autocomplete="new-password" required />
         </div>
-        <button type="submit" class="btn btn-secondary">Change password</button>
+        <button type="submit" class="btn btn-secondary">Update password</button>
     </form>
 </div>
 @section Scripts {

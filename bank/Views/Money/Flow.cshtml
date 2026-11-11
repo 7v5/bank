@@ -8,6 +8,13 @@
         _ => ("Send money", "Pay anyone with a SimpleBank account using their handle or email.", "Send", "send"),
     };
     ViewData["Title"] = title;
+    var reviewLabel = Model.Kind switch
+    {
+        MoneyKind.Send => "Review payment",
+        MoneyKind.Deposit => "Review deposit",
+        MoneyKind.Withdraw => "Review withdrawal",
+        _ => "Review transfer"
+    };
     var needsFrom = Model.Kind is MoneyKind.Withdraw or MoneyKind.Transfer or MoneyKind.Send;
     var needsTo = Model.Kind is MoneyKind.Deposit or MoneyKind.Transfer;
     var remaining = BankingService.DailySendLimit - Model.SentToday;
@@ -61,9 +68,9 @@
             }
 
             <div class="amount-field">
-                <label for="Amount" class="sr-only">Amount</label>
-                <div class="amount-input-wrap">
-                    <span class="currency">$</span>
+                <label for="Amount" class="label">Amount</label>
+                <div class="amount-input-wrap" onclick="this.querySelector('input').focus()">
+                    <span class="currency" aria-hidden="true">$</span>
                     <input asp-for="Amount" class="amount-input" type="text" inputmode="decimal" placeholder="0" autocomplete="off" value="@Model.Amount?.ToString("0.##")" />
                 </div>
                 <span asp-validation-for="Amount" class="field-error"></span>
@@ -71,8 +78,8 @@
                 {
                     <p class="hint">You can send <strong class="num">@Money.Format(Math.Max(0, remaining))</strong> more today (limit @Money.Format(BankingService.DailySendLimit) per 24 hours).</p>
                 }
-                <div class="quick-amounts">
-                    @foreach (var q in quick) { <button type="button" data-amount="@q">@Money.Format(q).Replace(".00", "")</button> }
+                <div class="quick-amounts" role="group" aria-label="Quick amounts">
+                    @foreach (var q in quick) { <button type="button" data-amount="@q" aria-label="Use @Money.Format(q)">@Money.Format(q).Replace(".00", "")</button> }
                 </div>
             </div>
 
@@ -83,11 +90,11 @@
                         <legend class="label">From</legend>
                         @foreach (var a in Model.Accounts)
                         {
-                            <label class="acct-pick @(a.IsFrozen ? "is-frozen" : "")">
+                            <label class="acct-pick @Ui.AccountTone(a.Type) @(a.IsFrozen ? "is-frozen" : "")">
                                 <input type="radio" name="FromAccountId" value="@a.Id" checked="@(Model.FromAccountId == a.Id)" data-balance="@a.Balance.ToString(System.Globalization.CultureInfo.InvariantCulture)" data-name="@a.Name" disabled="@a.IsFrozen" />
                                 <span class="acct-pick-card">
-                                    <span class="acct-icon">@Ui.Icon(a.Type == AccountType.Goal ? "target" : Ui.AccountIcon(a), "icon-sm")</span>
-                                    <span class="acct-pick-main"><strong>@a.Name</strong><small class="muted">@(a.IsFrozen ? "Frozen" : a.MaskedNumber)</small></span>
+                                    <span class="acct-tile">@Ui.Icon(Ui.AccountIcon(a), "icon-sm")</span>
+                                    <span class="acct-pick-main"><strong>@a.Name</strong><small class="muted num">@(a.IsFrozen ? "Frozen, can't send from it" : $"{Ui.AccountTypeLabel(a.Type)} {a.MaskedNumber}")</small></span>
                                     <span class="num acct-pick-bal">@Money.Format(a.Balance)</span>
                                 </span>
                             </label>
@@ -100,11 +107,11 @@
                         <legend class="label">To</legend>
                         @foreach (var a in Model.Accounts)
                         {
-                            <label class="acct-pick">
+                            <label class="acct-pick @Ui.AccountTone(a.Type)">
                                 <input type="radio" name="ToAccountId" value="@a.Id" checked="@(Model.ToAccountId == a.Id)" data-balance="@a.Balance.ToString(System.Globalization.CultureInfo.InvariantCulture)" data-name="@a.Name" />
                                 <span class="acct-pick-card">
-                                    <span class="acct-icon">@Ui.Icon(a.Type == AccountType.Goal ? "target" : Ui.AccountIcon(a), "icon-sm")</span>
-                                    <span class="acct-pick-main"><strong>@a.Name</strong><small class="muted">@a.MaskedNumber</small></span>
+                                    <span class="acct-tile">@Ui.Icon(Ui.AccountIcon(a), "icon-sm")</span>
+                                    <span class="acct-pick-main"><strong>@a.Name</strong><small class="muted num">@Ui.AccountTypeLabel(a.Type) @a.MaskedNumber</small></span>
                                     <span class="num acct-pick-bal">@Money.Format(a.Balance)</span>
                                 </span>
                             </label>
@@ -114,17 +121,18 @@
             </div>
 
             <div class="field">
-                <label asp-for="Memo">@(Model.Kind == MoneyKind.Send ? "What's it for?" : "Note") <span class="muted">(optional)</span></label>
-                <input asp-for="Memo" class="input" maxlength="140" placeholder="@(Model.Kind == MoneyKind.Send ? "Pizza night" : "Add a note")" />
+                <label asp-for="Memo">@(Model.Kind == MoneyKind.Send ? "What's it for?" : "Note") <span class="optional">(optional)</span></label>
+                <input asp-for="Memo" class="input" maxlength="140" placeholder="@(Model.Kind == MoneyKind.Send ? "For example, pizza night" : "Add a note for your records")" />
+                @if (Model.Kind == MoneyKind.Send) { <span class="hint">The person you pay will see this note.</span> }
             </div>
 
-            <button type="submit" class="btn btn-primary btn-lg btn-block" data-to-review>Review @cta.ToLowerInvariant()</button>
+            <button type="submit" class="btn btn-primary btn-lg btn-block" data-to-review>@reviewLabel</button>
         </div>
 
         @* ---------- Step 2: review (shown by money-flow.js) ---------- *@
         <div class="flow-step" data-step="2" hidden>
             <div class="review">
-                <span class="muted">You're about to @done</span>
+                <span class="muted">Check the details. Nothing moves until you confirm.</span>
                 <div class="review-amount num" data-review-amount>$0.00</div>
                 <dl class="detail-list">
                     @if (Model.Kind == MoneyKind.Send) { <dt>To</dt><dd data-review-recipient></dd> }
@@ -135,7 +143,7 @@
                 </dl>
             </div>
             <div class="flow-actions">
-                <button type="button" class="btn btn-secondary btn-lg" data-back>Edit</button>
+                <button type="button" class="btn btn-secondary btn-lg" data-back>@Ui.Icon("arrow-left", "icon-sm")Edit details</button>
                 <button type="submit" class="btn btn-primary btn-lg" data-confirm-submit>@cta <span class="num" data-cta-amount></span></button>
             </div>
         </div>

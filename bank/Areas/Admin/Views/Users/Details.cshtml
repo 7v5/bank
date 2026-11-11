@@ -11,7 +11,7 @@
 
 <div class="page-head">
     <div class="user-cell">
-        <span class="avatar avatar-lg" style="--c:@u.AvatarColor">@u.Initials</span>
+        <span class="avatar avatar-lg" style="--c:@u.AvatarColor" aria-hidden="true">@u.Initials</span>
         <div>
             <h1>@u.FullName</h1>
             <p>&#64;@u.Handle, @u.Email. Customer since @u.CreatedUtc.ToLocalTime().ToString("MMMM d, yyyy", Money.Culture).</p>
@@ -25,7 +25,7 @@
         }
         else
         {
-            <button class="btn btn-soft-danger" type="submit" data-confirm="Lock @u.FullName out? They'll be signed out immediately.">@Ui.Icon("lock", "icon-sm")Lock sign-in</button>
+            <button class="btn btn-danger" type="submit" data-confirm-title="Lock @u.FullName out?" data-confirm="They'll be signed out right away and can't sign in until you unlock them. This is recorded in the audit log." data-confirm-ok="Lock sign-in">@Ui.Icon("lock", "icon-sm")Lock sign-in</button>
         }
     </form>
 </div>
@@ -38,10 +38,10 @@
 <div class="acct-grid">
     @foreach (var a in accounts)
     {
-        <article class="card card-pad stack" style="gap:10px;@(a.IsActive ? "" : "opacity:.6")">
+        <article class="card card-pad admin-acct @Ui.AccountTone(a.Type) @(a.IsActive ? "" : "is-closed")">
             <div class="row">
-                <span class="acct-icon">@Ui.Icon(a.Type == AccountType.Goal ? "target" : Ui.AccountIcon(a), "icon-sm")</span>
-                <div style="flex:1;min-width:0"><strong>@a.Name</strong><div class="muted num" style="font-size:.84rem">@a.AccountNumber</div></div>
+                <span class="acct-tile">@Ui.Icon(Ui.AccountIcon(a), "icon-sm")</span>
+                <div style="flex:1;min-width:0"><strong>@a.Name</strong><div class="muted num" style="font-size:.84rem">@Ui.AccountTypeLabel(a.Type) @a.AccountNumber</div></div>
                 @if (a.IsFrozen) { <span class="chip chip-warn">@Ui.Icon("snowflake", "icon-sm")Frozen</span> }
                 @if (!a.IsActive) { <span class="chip">Closed</span> }
             </div>
@@ -51,12 +51,19 @@
                 <div class="row row-wrap">
                     <form asp-action="Freeze" asp-route-id="@u.Id" method="post">
                         <input type="hidden" name="accountId" value="@a.Id" /><input type="hidden" name="frozen" value="@(!a.IsFrozen ? "true" : "false")" />
-                        <button class="btn btn-secondary btn-sm" type="submit">@Ui.Icon("snowflake", "icon-sm")@(a.IsFrozen ? "Unfreeze" : "Freeze")</button>
+                        @if (a.IsFrozen)
+                        {
+                            <button class="btn btn-secondary btn-sm" type="submit">@Ui.Icon("snowflake", "icon-sm")Unfreeze account</button>
+                        }
+                        else
+                        {
+                            <button class="btn btn-danger btn-sm" type="submit" data-confirm-title="Freeze @a.Name?" data-confirm="@u.FirstName won't be able to send or withdraw from this account until you unfreeze it. This is recorded in the audit log." data-confirm-ok="Freeze account">@Ui.Icon("snowflake", "icon-sm")Freeze account</button>
+                        }
                     </form>
-                    <button class="btn btn-ghost btn-sm" type="button" data-drawer-open="adjust-@a.Id">@Ui.Icon("sliders", "icon-sm")Adjust</button>
+                    <button class="btn btn-ghost btn-sm" type="button" data-drawer-open="adjust-@a.Id" aria-controls="adjust-@a.Id">@Ui.Icon("sliders", "icon-sm")Adjust balance</button>
                 </div>
                 <div class="drawer" id="adjust-@a.Id" role="dialog" aria-modal="true" aria-label="Adjust balance" aria-hidden="true">
-                    <div><div class="sheet-grip"></div><div class="drawer-head"><h2>Adjust @a.Name</h2><button type="button" class="icon-btn" data-drawer-close aria-label="Close">@Ui.Icon("x")</button></div></div>
+                    <div><div class="sheet-grip"></div><div class="drawer-head"><h2>Adjust @a.Name</h2><button type="button" class="icon-btn" data-drawer-close aria-label="Close without posting">@Ui.Icon("x")</button></div></div>
                     <form class="drawer-body form" asp-action="Adjust" asp-route-id="@u.Id" method="post">
                         <input type="hidden" name="accountId" value="@a.Id" />
                         <p class="muted">Posts a ledger line marked as a bank adjustment. The customer is notified and the action is audited.</p>
@@ -64,8 +71,8 @@
                             <label class="seg-radio" role="radio" aria-checked="true" aria-selected="true"><input class="sr-only" type="radio" name="direction" value="credit" checked />Credit</label>
                             <label class="seg-radio" role="radio" aria-checked="false" aria-selected="false"><input class="sr-only" type="radio" name="direction" value="debit" />Debit</label>
                         </div>
-                        <div class="field"><label for="amt-@a.Id">Amount</label><input id="amt-@a.Id" name="amount" class="input num" inputmode="decimal" required placeholder="25.00" /></div>
-                        <div class="field"><label for="why-@a.Id">Reason</label><input id="why-@a.Id" name="reason" class="input" required minlength="5" maxlength="200" placeholder="Refund of duplicate charge" /></div>
+                        <div class="field"><label for="amt-@a.Id">Amount in dollars</label><input id="amt-@a.Id" name="amount" class="input num" inputmode="decimal" required placeholder="25.00" /></div>
+                        <div class="field"><label for="why-@a.Id">Reason</label><input id="why-@a.Id" name="reason" class="input" required minlength="5" maxlength="200" placeholder="For example, refund of a duplicate charge" /><span class="hint">The customer sees this reason. At least 5 characters.</span></div>
                         <button class="btn btn-primary" type="submit">Post adjustment</button>
                     </form>
                 </div>
@@ -92,6 +99,6 @@
             seg.querySelectorAll("label").forEach((l) => { const on = l.querySelector("input").checked; l.setAttribute("aria-checked", on); l.setAttribute("aria-selected", on); });
             (await import("/js/ui.js")).syncSegmented(seg);
         }));
-        document.addEventListener("click", (e) => { if (e.target.closest("[data-drawer-open]")) setTimeout(async () => document.querySelectorAll(".drawer.open .segmented").forEach((await import("/js/ui.js")).syncSegmented), 60); });
+        document.addEventListener("click", (e) => { if (e.target.closest("[data-drawer-open]")) setTimeout(async () => document.querySelectorAll(".drawer.open .segmented").forEach((await import("/js/ui.js")).syncSegmented), 240); });
     </script>
 }

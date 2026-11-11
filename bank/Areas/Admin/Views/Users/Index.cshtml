@@ -5,7 +5,7 @@
     var q = ViewBag.Q as string;
     var now = Clock.GetUtcNow().UtcDateTime;
 }
-<div class="page-head"><div><h1>Customers</h1><p>@Model.TotalCount customers. Open one to see their accounts, freeze an account or post an adjustment.</p></div></div>
+<div class="page-head"><div><h1>Customers</h1><p>@Model.TotalCount customers. Select View customer to see their accounts, freeze an account or post an adjustment.</p></div></div>
 
 <form method="get" class="admin-toolbar" role="search">
     <div class="input-wrap">@Ui.Icon("search")<input class="input" type="search" name="q" value="@q" placeholder="Search by name, handle or email" aria-label="Search customers" /></div>
@@ -20,23 +20,23 @@
     else
     {
         <div class="table-wrap">
-            <table class="table">
-                <thead><tr><th>Customer</th><th class="r">Accounts</th><th class="r">Balance</th><th class="hide-sm">Last activity</th><th>Status</th><th></th></tr></thead>
+            <table class="table table-stack">
+                <thead><tr><th>Customer</th><th class="r">Accounts</th><th class="r">Balance</th><th class="hide-sm">Last activity</th><th>Status</th><th><span class="sr-only">Actions</span></th></tr></thead>
                 <tbody>
                     @foreach (var r in Model.Items)
                     {
                         <tr>
-                            <td>
+                            <td class="cell-main">
                                 <div class="user-cell">
-                                    <span class="avatar avatar-sm" style="--c:@r.User.AvatarColor">@r.User.Initials</span>
+                                    <span class="avatar avatar-sm" style="--c:@r.User.AvatarColor" aria-hidden="true">@r.User.Initials</span>
                                     <div><strong>@r.User.FullName</strong><small>&#64;@r.User.Handle, @r.User.Email</small></div>
                                 </div>
                             </td>
-                            <td class="r num">@r.Accounts</td>
-                            <td class="r num">@Money.Format(r.Balance)</td>
-                            <td class="hide-sm muted">@(r.LastActivity is { } w ? Ui.Ago(w, now) : "Never")</td>
-                            <td>@if (r.IsLocked) { <span class="chip chip-neg">@Ui.Icon("lock", "icon-sm")Locked</span> } else { <span class="chip chip-pos">Active</span> }</td>
-                            <td class="r"><a class="btn btn-secondary btn-sm" asp-action="Details" asp-route-id="@r.User.Id">Open</a></td>
+                            <td class="r num" data-label="Accounts">@r.Accounts</td>
+                            <td class="r num" data-label="Balance">@Money.Format(r.Balance)</td>
+                            <td class="hide-sm muted" data-label="Last activity">@(r.LastActivity is { } w ? Ui.Ago(w, now) : "Never")</td>
+                            <td data-label="Status">@if (r.IsLocked) { <span class="chip chip-neg">@Ui.Icon("lock", "icon-sm")Locked</span> } else { <span class="chip chip-pos">Active</span> }</td>
+                            <td class="r"><a class="btn btn-secondary btn-sm" asp-action="Details" asp-route-id="@r.User.Id" aria-label="View @r.User.FullName">View customer</a></td>
                         </tr>
                     }
                 </tbody>

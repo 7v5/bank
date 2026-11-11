@@ -17,7 +17,8 @@ document.querySelectorAll("[data-password-toggle]").forEach((b) =>
     const show = input.type === "password";
     input.type = show ? "text" : "password";
     b.setAttribute("aria-label", show ? "Hide password" : "Show password");
-    b.querySelector("use").setAttribute("href", show ? "#i-eye-off" : "#i-eye");
+    b.setAttribute("aria-pressed", String(show));
+    b.textContent = show ? "Hide" : "Show";
   })
 );
 
@@ -31,5 +32,7 @@ document.querySelectorAll("[data-strength]").forEach((input) => {
     if (/\d/.test(v)) score++;
     if (v.length >= 12 || /[^A-Za-z0-9]/.test(v)) score++;
     meter.dataset.score = v ? score : 0;
+    const label = meter.querySelector("[data-strength-label]");
+    if (label) label.textContent = !v ? "" : ["Too weak", "Weak", "Okay", "Good", "Strong"][score];
   });
 });

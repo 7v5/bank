@@ -16,12 +16,7 @@ async function load(url, { push = true } = {}) {
     const res = await fetch(url, { headers: { "X-Partial": "1" }, signal: controller.signal });
     if (!res.ok) throw new Error(res.statusText);
     const html = await res.text();
-    const swap = () => { host.innerHTML = html; };
-    if (document.startViewTransition && !matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      host.style.viewTransitionName = "results";
-      await document.startViewTransition(swap).finished.catch(() => {});
-      host.style.viewTransitionName = "";
-    } else swap();
+    host.innerHTML = html;
     if (push) history.replaceState(null, "", url);
   } catch (e) {
     if (e.name !== "AbortError") location.href = url;
@@ -84,7 +79,7 @@ document.addEventListener("click", (e) => {
     form.querySelectorAll('input[type=radio][value=""]').forEach((r) => { r.checked = true; r.dispatchEvent(new Event("change", { bubbles: true })); });
     return;
   }
-  load(link.href).then(() => host.scrollIntoView({ behavior: "smooth", block: "start" }));
+  load(link.href).then(() => host.scrollIntoView({ block: "start" }));
 });
 
 // Detail drawer.
@@ -94,7 +89,7 @@ document.addEventListener("click", async (e) => {
   const drawer = document.getElementById("tx-drawer");
   if (!drawer) return;
   const content = drawer.querySelector("[data-drawer-content]");
-  content.innerHTML = `<div class="stack"><div class="skeleton" style="height:120px"></div><div class="skeleton" style="height:220px"></div></div>`;
+  content.innerHTML = `<div class="stack" aria-label="Loading"><div class="skeleton" style="height:120px"></div><div class="skeleton" style="height:220px"></div></div>`;
   openDrawer("tx-drawer");
   try {
     const res = await fetch(`${drawer.dataset.detailUrl}${row.dataset.tx}`, { headers: { "X-Partial": "1" } });

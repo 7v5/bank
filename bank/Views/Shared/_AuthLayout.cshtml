@@ -1,4 +1,4 @@
-@* Layout for signed-out pages: login, register and errors. Form on the left, the engraved note on the right. *@
+@* Layout for signed-out pages: login, register and errors. Form on the left, a claret panel with the still rosette on the right. *@
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,38 +6,30 @@
 </head>
 <body data-auth="0" class="auth-body">
     <partial name="_Icons" />
+    <a class="sr-only" href="#main">Skip to content</a>
     <div class="auth">
         <div class="auth-form-col">
             <header class="auth-top">
-                <a class="brand" href="/"><img class="brand-mark" src="~/img/favicon.svg" alt="" /><span>SimpleBank</span></a>
-                <button type="button" class="icon-btn theme-toggle" data-theme-toggle aria-label="Toggle dark mode">
-                    <svg class="icon sun" aria-hidden="true"><use href="#i-sun" /></svg>
-                    <svg class="icon moon" aria-hidden="true"><use href="#i-moon" /></svg>
+                <a class="brand" href="/" aria-label="SimpleBank home"><img class="brand-mark" src="~/img/favicon.svg" alt="" /><span>SimpleBank</span></a>
+                <button type="button" class="icon-btn theme-toggle" data-theme-toggle data-tip="Switch to dark mode" aria-label="Switch to dark mode">
+                    <svg class="icon when-light" aria-hidden="true"><use href="#i-moon" /></svg>
+                    <svg class="icon when-dark" aria-hidden="true"><use href="#i-sun" /></svg>
                 </button>
             </header>
             <main id="main" class="auth-main">
                 @RenderBody()
             </main>
-            <footer class="auth-foot muted">A class project. No real money moves here.</footer>
+            <footer class="auth-foot muted">SimpleBank is a class project. No real money moves here.</footer>
         </div>
-        <aside class="auth-art" aria-hidden="true">
-            <div class="auth-art-inner">
-                <div class="note note-showcase">
-                    <svg class="note-rosette" viewBox="-100 -100 200 200">@Ui.Rosette()</svg>
-                    <svg class="note-waves" viewBox="0 0 400 60" preserveAspectRatio="none">@Ui.Waves()</svg>
-                    <div class="note-frame"></div>
-                    <div class="note-content">
-                        <span class="note-label">Total balance</span>
-                        <span class="note-amount num"><span class="note-cur">$</span>12,480<sup>.36</sup></span>
-                        <span class="note-meta">Checking, savings and a Japan trip fund</span>
-                    </div>
-                    <span class="note-denom">SB</span>
-                </div>
-                <div class="auth-art-copy">
-                    <h2>Every dollar, accounted for.</h2>
-                    <p>Send money to friends by handle, move it between accounts, and see where it goes each month.</p>
-                </div>
-            </div>
+        <aside class="auth-art" aria-label="About SimpleBank">
+            <svg class="rosette" viewBox="-100 -100 200 200" aria-hidden="true">@Ui.Rosette()</svg>
+            <h2>Banking you can read line by line.</h2>
+            <p>Every account keeps a ledger you can search, so you always know where a dollar came from and where it went.</p>
+            <ul class="auth-points">
+                <li><span class="tick">@Ui.Icon("send", "icon-sm")</span><span><strong>Pay people by handle</strong><span>Type @@alice, check the name, then send.</span></span></li>
+                <li><span class="tick">@Ui.Icon("target", "icon-sm")</span><span><strong>Save toward a goal</strong><span>Set a target and watch the progress bar fill.</span></span></li>
+                <li><span class="tick">@Ui.Icon("lock", "icon-sm")</span><span><strong>Locked after 5 wrong passwords</strong><span>Sign-in pauses for five minutes to stop guessing.</span></span></li>
+            </ul>
         </aside>
     </div>
     <div class="toasts" aria-live="polite"></div>

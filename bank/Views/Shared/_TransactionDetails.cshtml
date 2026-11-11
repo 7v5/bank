@@ -5,14 +5,14 @@
 }
 <div class="tx-detail">
     <div class="tx-detail-hero">
-        <span class="tx-icon cat-@Model.Category" style="width:56px;height:56px;border-radius:18px">@Ui.Icon(Ui.TransactionIcon(Model), "icon-lg")</span>
+        <span class="tx-icon cat-@Model.Category" style="width:56px;height:56px;border-radius:var(--r-lg)">@Ui.Icon(Ui.TransactionIcon(Model), "icon-lg")</span>
         <div class="tx-detail-amt num @(isIn ? "pos" : "")">@Money.Signed(Model.Amount)</div>
         <div class="tx-detail-title">@Ui.TransactionTitle(Model)</div>
         <div class="muted">@Model.PostedUtc.ToLocalTime().ToString("dddd, MMMM d, yyyy 'at' h:mm tt", Money.Culture)</div>
     </div>
     <dl class="detail-list">
         <dt>Type</dt><dd>@Ui.TypeLabel(Model.Type)</dd>
-        <dt>Category</dt><dd><span class="chip cat-@Model.Category" style="background:color-mix(in srgb,var(--c) 14%,transparent);color:var(--c)">@Model.Category</span></dd>
+        <dt>Category</dt><dd><span class="chip cat-@Model.Category" style="background:color-mix(in srgb,var(--c) 14%,transparent);color:var(--ink)">@Model.Category</span></dd>
         <dt>Account</dt><dd>@Model.BankAccount.Name <span class="muted">@Model.BankAccount.MaskedNumber</span></dd>
         @if (related is not null)
         {
@@ -26,14 +26,14 @@
         <dt>Balance after</dt><dd class="num">@Money.Format(Model.BalanceAfter)</dd>
         <dt>Reference</dt>
         <dd>
-            <button type="button" class="btn btn-ghost btn-sm" data-copy="@Model.Reference" data-copy-label="@Model.Reference">@Model.Reference @Ui.Icon("copy", "icon-sm")</button>
+            <button type="button" class="btn btn-ghost btn-sm" data-copy="@Model.Reference" data-copy-label="@Model.Reference" aria-label="Copy reference @Model.Reference"><span class="num">@Model.Reference</span>@Ui.Icon("copy", "icon-sm")</button>
         </dd>
     </dl>
-    <div class="row row-wrap" style="margin-top:24px">
-        <a class="btn btn-secondary btn-block" href="/Accounts/Details/@Model.BankAccountId">View account</a>
+    <div class="tx-detail-actions">
+        <a class="btn btn-secondary btn-block" href="/Accounts/Details/@Model.BankAccountId">Open @Model.BankAccount.Name</a>
         @if (ViewBag.CounterpartyHandle is string handle)
         {
-            <a class="btn btn-primary btn-block" href="/Money/Send?to=%40@handle">@(Model.Type == TransactionType.P2PReceived ? "Send money back" : "Send again")</a>
+            <a class="btn btn-primary btn-block" href="/Money/Send?to=%40@handle">@(Model.Type == TransactionType.P2PReceived ? $"Send money to {Model.CounterpartyName}" : $"Send {Model.CounterpartyName} money again")</a>
         }
     </div>
 </div>

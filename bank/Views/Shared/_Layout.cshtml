@@ -8,6 +8,9 @@
     var isAdmin = shell?.IsAdmin == true;
     var user = shell?.User;
     var pageTitle = ViewData["Title"] as string ?? "SimpleBank";
+    var unread = shell?.UnreadNotifications ?? 0;
+    var unreadText = unread > 9 ? "9+" : unread.ToString();
+    var pending = shell?.PendingRequests ?? 0;
 }
 <!DOCTYPE html>
 <html lang="en">
@@ -20,43 +23,37 @@
     <a class="sr-only" href="#main">Skip to content</a>
     <div class="app">
         <aside class="sidebar" aria-label="Main navigation">
-            <a class="brand" asp-controller="@(isAdmin ? "Dashboard" : "Dashboard")" asp-action="Index" asp-area="@(isAdmin ? "Admin" : "")">
+            <a class="brand" asp-area="@(isAdmin ? "Admin" : "")" asp-controller="Dashboard" asp-action="Index" aria-label="SimpleBank home">
                 <img class="brand-mark" src="~/img/favicon.svg" alt="" />
                 <span>SimpleBank</span>
             </a>
+            @if (isAdmin) { <span class="brand-sub">Admin console</span> }
             <nav class="nav">
                 @if (!isAdmin)
                 {
-                    <a class="nav-link" data-tip="Home" asp-area="" asp-controller="Dashboard" asp-action="Index" aria-current="@Cur("Dashboard")">@Ui.Icon("home")<span>Home</span></a>
-                    <a class="nav-link" data-tip="Accounts" asp-area="" asp-controller="Accounts" asp-action="Index" aria-current="@Cur("Accounts")">@Ui.Icon("wallet")<span>Accounts</span></a>
-                    <a class="nav-link" data-tip="Activity" asp-area="" asp-controller="Transactions" asp-action="Index" aria-current="@Cur("Transactions")">@Ui.Icon("list")<span>Activity</span></a>
-                    <div class="nav-section">Move money</div>
-                    <a class="nav-link" data-tip="Send & transfer" asp-area="" asp-controller="Money" asp-action="Index" aria-current="@Cur("Money")">@Ui.Icon("send")<span>Send &amp; transfer</span></a>
-                    <a class="nav-link" data-tip="Requests" asp-area="" asp-controller="Requests" asp-action="Index" aria-current="@Cur("Requests")">@Ui.Icon("request")<span>Requests</span><span class="badge-dot" data-pending-badge hidden="@(shell?.PendingRequests is null or 0)">@shell?.PendingRequests</span></a>
-                    <a class="nav-link" data-tip="Bill pay" asp-area="" asp-controller="BillPay" asp-action="Index" aria-current="@Cur("BillPay")">@Ui.Icon("receipt")<span>Bill pay</span></a>
+                    <a class="nav-link" asp-area="" asp-controller="Dashboard" asp-action="Index" aria-current="@Cur("Dashboard")">@Ui.Icon("home")<span class="nav-label">Home</span></a>
+                    <a class="nav-link" asp-area="" asp-controller="Accounts" asp-action="Index" aria-current="@Cur("Accounts")">@Ui.Icon("wallet")<span class="nav-label">Accounts</span></a>
+                    <a class="nav-link" asp-area="" asp-controller="Transactions" asp-action="Index" aria-current="@Cur("Transactions")">@Ui.Icon("list")<span class="nav-label">Activity</span></a>
+                    <div class="nav-section">Payments</div>
+                    <div class="nav-sep" aria-hidden="true"></div>
+                    <a class="nav-link" asp-area="" asp-controller="Money" asp-action="Index" aria-current="@Cur("Money")">@Ui.Icon("swap")<span class="nav-label">Move money</span></a>
+                    <a class="nav-link" asp-area="" asp-controller="Requests" asp-action="Index" aria-current="@Cur("Requests")">@Ui.Icon("request")<span class="nav-label">Requests</span><span class="badge-dot" data-pending-badge hidden="@(pending == 0)" aria-label="@pending waiting">@pending</span></a>
+                    <a class="nav-link" asp-area="" asp-controller="BillPay" asp-action="Index" aria-current="@Cur("BillPay")">@Ui.Icon("receipt")<span class="nav-label">Bill pay</span></a>
                 }
                 else
                 {
-                    <a class="nav-link" data-tip="Overview" asp-area="Admin" asp-controller="Dashboard" asp-action="Index" aria-current="@Cur("Dashboard", "Admin")">@Ui.Icon("chart")<span>Overview</span></a>
-                    <a class="nav-link" data-tip="Customers" asp-area="Admin" asp-controller="Users" asp-action="Index" aria-current="@Cur("Users", "Admin")">@Ui.Icon("users")<span>Customers</span></a>
-                    <a class="nav-link" data-tip="Ledger" asp-area="Admin" asp-controller="Ledger" asp-action="Index" aria-current="@Cur("Ledger", "Admin")">@Ui.Icon("list")<span>Ledger</span></a>
-                    <a class="nav-link" data-tip="Audit log" asp-area="Admin" asp-controller="Audit" asp-action="Index" aria-current="@Cur("Audit", "Admin")">@Ui.Icon("history")<span>Audit log</span></a>
+                    <a class="nav-link" asp-area="Admin" asp-controller="Dashboard" asp-action="Index" aria-current="@Cur("Dashboard", "Admin")">@Ui.Icon("chart")<span class="nav-label">Overview</span></a>
+                    <a class="nav-link" asp-area="Admin" asp-controller="Users" asp-action="Index" aria-current="@Cur("Users", "Admin")">@Ui.Icon("users")<span class="nav-label">Customers</span></a>
+                    <a class="nav-link" asp-area="Admin" asp-controller="Ledger" asp-action="Index" aria-current="@Cur("Ledger", "Admin")">@Ui.Icon("list")<span class="nav-label">Ledger</span></a>
+                    <a class="nav-link" asp-area="Admin" asp-controller="Audit" asp-action="Index" aria-current="@Cur("Audit", "Admin")">@Ui.Icon("history")<span class="nav-label">Audit log</span></a>
                 }
-                <div class="nav-section">You</div>
-                <a class="nav-link" data-tip="Notifications" asp-area="" asp-controller="Notifications" asp-action="Index" aria-current="@Cur("Notifications")">@Ui.Icon("bell")<span>Notifications</span><span class="badge-dot" data-unread-badge hidden="@(shell?.UnreadNotifications is null or 0)">@(shell?.UnreadNotifications > 9 ? "9+" : shell?.UnreadNotifications.ToString())</span></a>
-                <a class="nav-link" data-tip="Profile" asp-area="" asp-controller="Profile" asp-action="Index" aria-current="@Cur("Profile")">@Ui.Icon("user")<span>Profile</span></a>
+                <div class="nav-section">Settings</div>
+                <div class="nav-sep" aria-hidden="true"></div>
+                <a class="nav-link" asp-area="" asp-controller="Profile" asp-action="Index" aria-current="@Cur("Profile")">@Ui.Icon("user")<span class="nav-label">Profile</span></a>
             </nav>
             <div class="sidebar-foot">
-                <div class="theme-row">
-                    <span class="label">Appearance</span>
-                    <span class="spacer"></span>
-                    <button type="button" class="icon-btn theme-toggle" data-theme-toggle aria-label="Toggle dark mode">
-                        <svg class="icon sun" aria-hidden="true"><use href="#i-sun" /></svg>
-                        <svg class="icon moon" aria-hidden="true"><use href="#i-moon" /></svg>
-                    </button>
-                </div>
                 <form asp-area="" asp-controller="Account" asp-action="Logout" method="post">
-                    <button class="nav-link" data-tip="Sign out" type="submit" style="width:100%;border:0;background:none;cursor:pointer">@Ui.Icon("logout")<span>Sign out</span></button>
+                    <button class="nav-link" type="submit">@Ui.Icon("logout")<span class="nav-label">Sign out</span></button>
                 </form>
             </div>
         </aside>
@@ -69,45 +66,48 @@
                     <span class="topbar-greeting">@Ui.Greeting(DateTime.Now), <strong>@user.FirstName</strong></span>
                 }
                 <div class="topbar-actions">
-                    <button type="button" class="icon-btn theme-toggle" data-theme-toggle aria-label="Toggle dark mode">
-                        <svg class="icon sun" aria-hidden="true"><use href="#i-sun" /></svg>
-                        <svg class="icon moon" aria-hidden="true"><use href="#i-moon" /></svg>
+                    <button type="button" class="icon-btn theme-toggle" data-theme-toggle data-tip="Switch to dark mode" aria-label="Switch to dark mode">
+                        <svg class="icon when-light" aria-hidden="true"><use href="#i-moon" /></svg>
+                        <svg class="icon when-dark" aria-hidden="true"><use href="#i-sun" /></svg>
                     </button>
                     <div class="popover-anchor">
-                        <button type="button" class="icon-btn" data-notif-bell data-latest="@shell?.LatestNotificationId" data-popover="notif-pop" aria-expanded="false" aria-label="Notifications">
+                        <button type="button" class="icon-btn" data-notif-bell data-latest="@shell?.LatestNotificationId" data-popover="notif-pop" aria-expanded="false" aria-label="Notifications" data-tip="Notifications">
                             @Ui.Icon("bell")
-                            <span class="badge-dot" data-unread-badge hidden="@(shell?.UnreadNotifications is null or 0)">@(shell?.UnreadNotifications > 9 ? "9+" : shell?.UnreadNotifications.ToString())</span>
+                            <span class="badge-dot" data-unread-badge hidden="@(unread == 0)">@unreadText</span>
                         </button>
                         <div class="popover notif-panel" id="notif-pop" role="dialog" aria-label="Notifications">
                             <div class="notif-head">
                                 <h3>Notifications</h3>
-                                <button type="button" class="btn btn-ghost btn-sm" data-mark-all>Mark all read</button>
+                                <button type="button" class="btn btn-ghost btn-sm" data-mark-all>@Ui.Icon("check", "icon-sm")Mark all as read</button>
                             </div>
                             <div class="notif-list"></div>
-                            <div class="notif-foot"><a asp-area="" asp-controller="Notifications" asp-action="Index" class="btn btn-ghost btn-sm">See all notifications</a></div>
+                            <div class="notif-foot"><a asp-area="" asp-controller="Notifications" asp-action="Index" class="btn btn-ghost btn-sm">View all notifications</a></div>
                         </div>
                     </div>
                     @if (user is not null)
                     {
                         <div class="popover-anchor">
-                            <button type="button" class="avatar-btn" data-popover="user-pop" aria-expanded="false" aria-label="Account menu">
-                                <span class="avatar avatar-sm" style="--c:@user.AvatarColor">@user.Initials</span>
+                            <button type="button" class="avatar-btn" data-popover="user-pop" aria-expanded="false" aria-haspopup="menu" aria-label="Your account menu">
+                                <span class="avatar avatar-sm" style="--c:@user.AvatarColor" aria-hidden="true">@user.Initials</span>
+                                <span class="who">@user.FirstName</span>
+                                @Ui.Icon("chevron-down", "icon-sm")
                             </button>
-                            <div class="popover" id="user-pop">
+                            <div class="popover" id="user-pop" role="menu">
                                 <div class="menu-head">
-                                    <span class="avatar" style="--c:@user.AvatarColor">@user.Initials</span>
+                                    <span class="avatar" style="--c:@user.AvatarColor" aria-hidden="true">@user.Initials</span>
                                     <div><div class="name">@user.FullName</div><div class="sub">@@@user.Handle</div></div>
                                 </div>
                                 <div class="menu-sep"></div>
-                                <a class="menu-item" asp-area="" asp-controller="Profile" asp-action="Index">@Ui.Icon("user")Profile &amp; settings</a>
+                                <a class="menu-item" role="menuitem" asp-area="" asp-controller="Profile" asp-action="Index">@Ui.Icon("user")Profile and settings</a>
+                                <a class="menu-item" role="menuitem" asp-area="" asp-controller="Notifications" asp-action="Index">@Ui.Icon("bell")Notifications @if (unread > 0) { <small>@unreadText new</small> }</a>
                                 @if (isAdmin)
                                 {
-                                    <a class="menu-item" asp-area="Admin" asp-controller="Dashboard" asp-action="Index">@Ui.Icon("shield")Admin console</a>
+                                    <a class="menu-item" role="menuitem" asp-area="Admin" asp-controller="Dashboard" asp-action="Index">@Ui.Icon("shield")Admin console</a>
                                 }
-                                <a class="menu-item" href="/scalar" target="_blank" rel="noopener">@Ui.Icon("code")API reference</a>
+                                <a class="menu-item" role="menuitem" href="/scalar" target="_blank" rel="noopener">@Ui.Icon("code")API reference <small>New tab</small></a>
                                 <div class="menu-sep"></div>
                                 <form asp-area="" asp-controller="Account" asp-action="Logout" method="post">
-                                    <button class="menu-item" type="submit">@Ui.Icon("logout")Sign out</button>
+                                    <button class="menu-item" role="menuitem" type="submit">@Ui.Icon("logout")Sign out</button>
                                 </form>
                             </div>
                         </div>
@@ -126,15 +126,15 @@
         <nav class="bottom-nav" aria-label="Main navigation">
             <a class="tab" asp-area="" asp-controller="Dashboard" asp-action="Index" aria-current="@Cur("Dashboard")">@Ui.Icon("home")Home</a>
             <a class="tab" asp-area="" asp-controller="Accounts" asp-action="Index" aria-current="@Cur("Accounts")">@Ui.Icon("wallet")Accounts</a>
-            <button type="button" class="tab tab-move" data-drawer-open="move-sheet" aria-expanded="false" aria-label="Move money">
-                <span class="move-btn">@Ui.Icon("plus", "icon-lg")</span>
+            <button type="button" class="tab tab-move" data-drawer-open="move-sheet" aria-expanded="false" aria-controls="move-sheet">
+                <span class="move-btn">@Ui.Icon("swap", "icon-sm")</span>Move
             </button>
             <a class="tab" asp-area="" asp-controller="Transactions" asp-action="Index" aria-current="@Cur("Transactions")">@Ui.Icon("list")Activity</a>
-            <a class="tab" asp-area="" asp-controller="Requests" asp-action="Index" aria-current="@Cur("Requests")">@Ui.Icon("request")Requests<span class="badge-dot" data-pending-badge hidden="@(shell?.PendingRequests is null or 0)">@shell?.PendingRequests</span></a>
+            <a class="tab" asp-area="" asp-controller="Requests" asp-action="Index" aria-current="@Cur("Requests")">@Ui.Icon("request")Requests<span class="badge-dot" data-pending-badge hidden="@(pending == 0)">@pending</span></a>
         </nav>
-        <div class="drawer" id="move-sheet" role="dialog" aria-modal="true" aria-label="Move money" aria-hidden="true">
+        <div class="drawer" id="move-sheet" role="dialog" aria-modal="true" aria-labelledby="move-sheet-h" aria-hidden="true">
             <div><div class="sheet-grip"></div>
-                <div class="drawer-head"><h2>Move money</h2><button type="button" class="icon-btn" data-drawer-close aria-label="Close">@Ui.Icon("x")</button></div>
+                <div class="drawer-head"><h2 id="move-sheet-h">Move money</h2><button type="button" class="icon-btn" data-drawer-close aria-label="Close">@Ui.Icon("x")</button></div>
             </div>
             <div class="drawer-body"><partial name="_MoneyActions" /></div>
         </div>
@@ -145,10 +145,23 @@
             <a class="tab" asp-area="Admin" asp-controller="Dashboard" asp-action="Index" aria-current="@Cur("Dashboard", "Admin")">@Ui.Icon("chart")Overview</a>
             <a class="tab" asp-area="Admin" asp-controller="Users" asp-action="Index" aria-current="@Cur("Users", "Admin")">@Ui.Icon("users")Customers</a>
             <a class="tab" asp-area="Admin" asp-controller="Ledger" asp-action="Index" aria-current="@Cur("Ledger", "Admin")">@Ui.Icon("list")Ledger</a>
-            <a class="tab" asp-area="Admin" asp-controller="Audit" asp-action="Index" aria-current="@Cur("Audit", "Admin")">@Ui.Icon("history")Audit</a>
+            <a class="tab" asp-area="Admin" asp-controller="Audit" asp-action="Index" aria-current="@Cur("Audit", "Admin")">@Ui.Icon("history")Audit log</a>
             <a class="tab" asp-area="" asp-controller="Profile" asp-action="Index" aria-current="@Cur("Profile")">@Ui.Icon("user")Profile</a>
         </nav>
     }
+
+    <dialog class="confirm-dialog" id="confirm-dialog" aria-labelledby="confirm-title" aria-describedby="confirm-text">
+        <form method="dialog">
+            <div class="confirm-body">
+                <span class="confirm-icon" aria-hidden="true">@Ui.Icon("alert")</span>
+                <div><h2 id="confirm-title">Are you sure?</h2><p id="confirm-text"></p></div>
+            </div>
+            <div class="confirm-actions">
+                <button class="btn btn-secondary" value="cancel" type="submit" data-dialog-cancel autofocus>Keep it</button>
+                <button class="btn btn-danger" value="ok" type="submit" data-dialog-ok>Confirm</button>
+            </div>
+        </form>
+    </dialog>
 
     <div class="toasts" aria-live="polite"></div>
     <partial name="_Flash" />

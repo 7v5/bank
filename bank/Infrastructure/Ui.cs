@@ -7,7 +7,7 @@ using SimpleBankMvc.Services;
 
 namespace SimpleBankMvc.Infrastructure;
 
-/// <summary>Small presentation helpers shared by views: icons, labels, relative times and the banknote engraving.</summary>
+/// <summary>Small presentation helpers shared by views: icons, labels, relative times and the guilloché rosette.</summary>
 public static class Ui
 {
     public static IHtmlContent Icon(string name, string? extraClass = null) =>
@@ -70,7 +70,16 @@ public static class Ui
     public static string AccountIcon(BankAccount a) => a.Type switch
     {
         AccountType.Savings => "vault",
+        AccountType.Goal => "target",
         _ => "wallet"
+    };
+
+    /// <summary>CSS tone class for an account type. Each type has one fixed color across cards, pickers, rows and charts.</summary>
+    public static string AccountTone(AccountType t) => t switch
+    {
+        AccountType.Savings => "tone-savings",
+        AccountType.Goal => "tone-goal",
+        _ => "tone-checking"
     };
 
     public static string DayLabel(DateTime utc, DateTime nowUtc)
@@ -104,23 +113,21 @@ public static class Ui
 
     public static string UserId(this ClaimsPrincipal user) => user.FindFirstValue(ClaimTypes.NameIdentifier)!;
 
-    // ---------- Engraving ----------
+    // ---------- Rosette ----------
 
     private static readonly Lazy<string> RosettePaths = new(BuildRosette);
-    private static readonly Lazy<string> WavePaths = new(BuildWaves);
 
-    /// <summary>Guilloché rosette (layered hypotrochoids) like the engraving on a banknote. Centered at 0,0, radius ≈ 100.</summary>
+    /// <summary>
+    /// Guilloché rosette (layered hypotrochoids) like the engraving on a banknote. Centered at 0,0, radius ≈ 100.
+    /// It is drawn once and never animated.
+    /// </summary>
     public static IHtmlContent Rosette() => new HtmlString(RosettePaths.Value);
-
-    /// <summary>Interference wave band, 400 × 60.</summary>
-    public static IHtmlContent Waves() => new HtmlString(WavePaths.Value);
 
     private static string BuildRosette()
     {
         var sb = new StringBuilder();
-        // (R, r, d, opacity) — each layer is a closed spirograph curve.
+        // (R, r, d, opacity): each layer is a closed spirograph curve.
         (double R, double r, double d, double o)[] layers = [(90, 33, 46, 0.85), (76, 28, 34, 0.6), (52, 20, 24, 0.5), (30, 12, 13, 0.45)];
-        var i = 0;
         foreach (var (R, r, d, o) in layers)
         {
             var turns = r / Gcd((int)R, (int)r);
@@ -133,23 +140,7 @@ public static class Ui
                 var y = (R - r) * Math.Sin(t) - d * Math.Sin((R - r) / r * t);
                 pts.Append(s == 0 ? 'M' : 'L').Append(F(x)).Append(' ').Append(F(y));
             }
-            sb.Append($"<path class=\"engrave\" style=\"--i:{i++}\" pathLength=\"1\" opacity=\"{F(o)}\" d=\"{pts}Z\"/>");
-        }
-        return sb.ToString();
-    }
-
-    private static string BuildWaves()
-    {
-        var sb = new StringBuilder();
-        for (var line = 0; line < 9; line++)
-        {
-            var pts = new StringBuilder();
-            for (var x = 0; x <= 400; x += 4)
-            {
-                var y = 30 + Math.Sin(x / 22.0 + line * 0.55) * (10 + line) * 0.9 + Math.Sin(x / 57.0 - line) * 6;
-                pts.Append(x == 0 ? 'M' : 'L').Append(x).Append(' ').Append(F(y));
-            }
-            sb.Append($"<path d=\"{pts}\"/>");
+            sb.Append($"<path opacity=\"{F(o)}\" d=\"{pts}Z\"/>");
         }
         return sb.ToString();
     }

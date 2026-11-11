@@ -5,17 +5,19 @@
     var now = Clock.GetUtcNow().UtcDateTime;
     var byDate = string.IsNullOrEmpty(Model.Query.Sort) || Model.Query.Sort.StartsWith("date");
     var rowData = new ViewDataDictionary(ViewData) { ["ShowAccount"] = Model.ShowAccount, ["ShowOwner"] = Model.ShowOwner };
+    // Detail pages scope the list to one account or customer but have no filter bar, so "no matches" never applies there.
+    var filtered = Model.Query.HasFilters && Model.Action != "Details";
 }
 <div class="tx-results" data-results data-total="@r.TotalCount">
     @if (r.TotalCount == 0)
     {
         <div class="empty">
             <div class="empty-icon">@Ui.Icon("search")</div>
-            <h3>@(Model.Query.HasFilters ? "No transactions match" : "No transactions yet")</h3>
-            <p>@(Model.Query.HasFilters ? "Try a wider date range or clear some filters." : "Deposits, transfers and payments will show up here.")</p>
-            @if (Model.Query.HasFilters)
+            <h3>@(filtered ? "No transactions match" : "No transactions yet")</h3>
+            <p>@(filtered ? "Try a wider date range or clear some filters." : "Deposits, transfers and payments will show up here.")</p>
+            @if (filtered)
             {
-                <a class="btn btn-secondary" href="@Context.Request.Path" data-clear-filters>Clear filters</a>
+                <a class="btn btn-secondary" href="@Context.Request.Path" data-clear-filters>@Ui.Icon("x", "icon-sm")Clear all filters</a>
             }
         </div>
     }

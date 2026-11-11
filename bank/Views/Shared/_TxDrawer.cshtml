@@ -1,7 +1,7 @@
 @* Drawer (bottom sheet on phones) that shows one transaction. Filled by transactions.js. *@
 <div class="drawer" id="tx-drawer" role="dialog" aria-modal="true" aria-labelledby="tx-drawer-title" aria-hidden="true" data-detail-url="@(ViewData["DetailUrl"] ?? "/Transactions/Details/")">
     <div><div class="sheet-grip"></div>
-        <div class="drawer-head"><h2 id="tx-drawer-title">Transaction</h2><button type="button" class="icon-btn" data-drawer-close aria-label="Close">@Ui.Icon("x")</button></div>
+        <div class="drawer-head"><h2 id="tx-drawer-title">Transaction details</h2><button type="button" class="icon-btn" data-drawer-close aria-label="Close transaction details">@Ui.Icon("x")</button></div>
     </div>
     <div class="drawer-body" data-drawer-content></div>
 </div>

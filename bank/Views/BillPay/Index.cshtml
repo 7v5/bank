@@ -6,7 +6,7 @@
     var now = Clock.GetUtcNow().UtcDateTime;
 }
 <div class="page-head">
-    <div><h1>Bill pay</h1><p>Pay the companies you owe from any of your accounts. Payments post instantly.</p></div>
+    <div><h1>Bill pay</h1><p>Your saved payees. Pay any of them from any account, and the payment posts right away.</p></div>
     <div class="row">
         <a class="btn btn-secondary" asp-action="AddPayee">@Ui.Icon("plus", "icon-sm")Add payee</a>
         <a class="btn btn-primary" asp-action="Pay">@Ui.Icon("receipt", "icon-sm")Pay a bill</a>
@@ -23,23 +23,25 @@
 }
 else
 {
-    <div class="payee-grid">
+    <section class="card payee-list" aria-labelledby="payees-h">
+        <div class="panel-head"><h2 id="payees-h">Saved payees</h2><span class="muted">@Model.Count @(Model.Count == 1 ? "payee" : "payees")</span></div>
         @foreach (var p in Model)
         {
-            <article class="card card-pad payee">
+            <article class="payee">
                 <span class="tx-icon cat-@p.Category">@Ui.Icon(Ui.CategoryIcon(p.Category))</span>
                 <div class="payee-main">
                     <strong>@p.Name</strong>
-                    <span class="muted num">@p.AccountReference</span>
+                    <span class="muted num">Reference @p.AccountReference</span>
                     <span class="muted payee-last">@(last.TryGetValue(p.Name, out var when) ? $"Last paid {Ui.Ago(when, now)}" : "Not paid yet")</span>
                 </div>
                 <div class="payee-actions">
-                    <a class="btn btn-primary btn-sm" asp-action="Pay" asp-route-id="@p.Id">Pay</a>
+                    <a class="btn btn-primary btn-sm" asp-action="Pay" asp-route-id="@p.Id" aria-label="Pay @p.Name">Pay</a>
                     <form asp-action="DeletePayee" asp-route-id="@p.Id" method="post">
-                        <button type="submit" class="btn btn-ghost btn-icon btn-sm" aria-label="Remove @p.Name" data-confirm="Remove @p.Name from your payees?">@Ui.Icon("trash", "icon-sm")</button>
+                        <button type="submit" class="btn btn-danger btn-icon btn-sm" aria-label="Remove @p.Name" data-tip="Remove payee"
+                                data-confirm-title="Remove @p.Name?" data-confirm="You won't be able to pay @p.Name until you add them again. Past payments stay in Activity." data-confirm-ok="Remove payee">@Ui.Icon("trash", "icon-sm")</button>
                     </form>
                 </div>
             </article>
         }
-    </div>
+    </section>
 }

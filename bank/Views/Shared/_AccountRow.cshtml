@@ -1,0 +1,31 @@
+@model BankAccount
+@* One account as a list row: color edge for its type, name, type and masked number, balance on the right. *@
+@{
+    var isGoal = Model.Type == AccountType.Goal;
+    var pct = (int)((Model.GoalProgress ?? 0) * 100);
+}
+<a class="acct-row @Ui.AccountTone(Model.Type)" asp-controller="Accounts" asp-action="Details" asp-route-id="@Model.Id" data-account-id="@Model.Id">
+    <span class="acct-tile">@Ui.Icon(Ui.AccountIcon(Model), "icon-sm")</span>
+    <span class="acct-row-main">
+        <strong>@Model.Name</strong>
+        <small class="num">@Ui.AccountTypeLabel(Model.Type) @Model.MaskedNumber</small>
+        @if (Model.IsPrimary || Model.IsFrozen)
+        {
+            <span class="acct-row-chips">
+                @if (Model.IsPrimary) { <span class="chip chip-primary">@Ui.Icon("star", "icon-sm")Primary</span> }
+                @if (Model.IsFrozen) { <span class="chip chip-warn">@Ui.Icon("snowflake", "icon-sm")Frozen</span> }
+            </span>
+        }
+        @if (isGoal && Model.GoalAmount is { } goal)
+        {
+            <span class="acct-row-goal">
+                <span class="progress" role="progressbar" aria-valuenow="@pct" aria-valuemin="0" aria-valuemax="100" aria-label="@Model.Name goal progress"><span style="width:@pct%"></span></span>
+                <small class="num">@pct% of @Money.Format(goal)</small>
+            </span>
+        }
+    </span>
+    <span class="acct-row-bal">
+        <span class="num" data-balance="@Model.Balance">@Money.Format(Model.Balance)</span>
+        <small>@(isGoal ? "Saved" : "Available")</small>
+    </span>
+</a>

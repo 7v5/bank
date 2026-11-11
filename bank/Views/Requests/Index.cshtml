@@ -19,8 +19,8 @@
 </div>
 
 <nav class="segmented tabs-seg" aria-label="Request lists">
-    <a asp-route-tab="incoming" aria-current="@(tab == "incoming" ? "page" : null)">To pay <span class="num">(@incoming.Count(r => r.Status == MoneyRequestStatus.Pending))</span></a>
-    <a asp-route-tab="outgoing" aria-current="@(tab == "outgoing" ? "page" : null)">Sent by you <span class="num">(@outgoing.Count(r => r.Status == MoneyRequestStatus.Pending))</span></a>
+    <a asp-route-tab="incoming" aria-current="@(tab == "incoming" ? "page" : null)">Asked of you <span class="num">(@incoming.Count(r => r.Status == MoneyRequestStatus.Pending) waiting)</span></a>
+    <a asp-route-tab="outgoing" aria-current="@(tab == "outgoing" ? "page" : null)">Sent by you <span class="num">(@outgoing.Count(r => r.Status == MoneyRequestStatus.Pending) waiting)</span></a>
 </nav>
 
 <section class="card card-pad" style="margin-top:var(--space-4)">
@@ -41,7 +41,7 @@
             {
                 var other = tab == "incoming" ? r.Requester : r.Payer;
                 <li class="req-row @(r.Status == MoneyRequestStatus.Pending ? "" : "is-done")">
-                    <span class="avatar" style="--c:@other.AvatarColor">@other.Initials</span>
+                    <span class="avatar" style="--c:@other.AvatarColor" aria-hidden="true">@other.Initials</span>
                     <div class="req-main">
                         <strong>@(tab == "incoming" ? $"{other.FullName} requested" : $"You asked {other.FullName}")</strong>
                         <span class="muted">@(r.Note ?? "No note")</span>
@@ -49,19 +49,19 @@
                     </div>
                     <div class="req-side">
                         <span class="req-amt num">@Money.Format(r.Amount)</span>
-                        <span class="chip @StatusChip(r.Status)">@r.Status</span>
+                        <span class="chip @StatusChip(r.Status)">@Ui.Icon(r.Status switch { MoneyRequestStatus.Pending => "clock", MoneyRequestStatus.Paid => "check", MoneyRequestStatus.Declined => "x", _ => "minus" }, "icon-sm")@(r.Status == MoneyRequestStatus.Pending ? "Waiting" : r.Status.ToString())</span>
                     </div>
                     @if (r.Status == MoneyRequestStatus.Pending)
                     {
                         <div class="req-actions">
                             @if (tab == "incoming")
                             {
-                                <form asp-action="Decline" asp-route-id="@r.Id" method="post"><button class="btn btn-ghost btn-sm" type="submit">Decline</button></form>
-                                <a class="btn btn-primary btn-sm" asp-action="Pay" asp-route-id="@r.Id">Pay</a>
+                                <form asp-action="Decline" asp-route-id="@r.Id" method="post"><button class="btn btn-danger btn-sm" type="submit" data-confirm-title="Decline @other.FirstName's request?" data-confirm="@other.FullName will see that you declined their request for @Money.Format(r.Amount)." data-confirm-ok="Decline request">Decline</button></form>
+                                <a class="btn btn-primary btn-sm" asp-action="Pay" asp-route-id="@r.Id">Pay @Money.Format(r.Amount)</a>
                             }
                             else
                             {
-                                <form asp-action="Cancel" asp-route-id="@r.Id" method="post"><button class="btn btn-ghost btn-sm" type="submit" data-confirm="Cancel this request?">Cancel request</button></form>
+                                <form asp-action="Cancel" asp-route-id="@r.Id" method="post"><button class="btn btn-danger btn-sm" type="submit" data-confirm-title="Cancel this request?" data-confirm="@other.FullName will no longer be asked to pay you @Money.Format(r.Amount)." data-confirm-ok="Cancel request">Cancel request</button></form>
                             }
                         </div>
                     }

@@ -5,9 +5,10 @@
     var accounts = (List<BankAccount>)ViewBag.Accounts;
     var categories = Enum.GetValues<TransactionCategory>();
     var types = Enum.GetValues<TransactionType>();
+    var moreCount = new object?[] { q.AccountId, q.Type, q.From, q.To }.Count(v => v is not null) + (q.Sort is null or "date_desc" ? 0 : 1);
 }
 <div class="page-head">
-    <div><h1>Activity</h1><p>Every transaction across your accounts. Filter, search and sort to find what you need.</p></div>
+    <div><h1>Activity</h1><p>Every transaction across your accounts. Search, filter and sort to find one, then select it to see the details.</p></div>
 </div>
 
 <form class="filters card card-pad" method="get" data-filter-form role="search" aria-label="Filter transactions">
@@ -26,7 +27,7 @@
             }
         </div>
         <button type="button" class="btn btn-secondary filters-toggle" aria-expanded="@(q.AccountId is not null || q.Type is not null || q.From is not null || q.To is not null ? "true" : "false")" aria-controls="more-filters" data-filters-toggle>
-            @Ui.Icon("filter", "icon-sm")Filters
+            @Ui.Icon("filter", "icon-sm")<span>More filters</span>@if (moreCount > 0) { <span class="active-count" aria-label="@moreCount active">@moreCount</span> }
         </button>
     </div>
 
@@ -84,6 +85,10 @@
         }
     </div>
     <noscript><button type="submit" class="btn btn-primary">Apply filters</button></noscript>
+    @if (q.HasFilters)
+    {
+        <div><a class="btn btn-ghost btn-sm" href="@Context.Request.Path" data-clear-filters>@Ui.Icon("x", "icon-sm")Clear all filters</a></div>
+    }
 </form>
 
 <section class="card card-pad results-card" aria-live="polite" aria-busy="false" data-results-host>

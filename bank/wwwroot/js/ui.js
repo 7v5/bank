@@ -1,5 +1,6 @@
-// Core UI behaviours shared by every page: toasts, popovers, drawers, theme, count-up,
+// Core UI behaviours shared by every page: toasts, popovers, drawers, theme, the confirm dialog,
 // segmented controls, form submit states, amount inputs and small conveniences.
+// Nothing here animates on its own: every visual change answers something the person did.
 
 const reduceMotion = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
 const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
@@ -126,24 +127,27 @@ function initSheetDrag(drawer) {
 
 // ---------- Theme ----------
 export function currentTheme() { return document.documentElement.dataset.theme; }
+// The toggle's label and tooltip always say what pressing it will do.
+function syncThemeButtons() {
+  const label = currentTheme() === "dark" ? "Switch to light mode" : "Switch to dark mode";
+  document.querySelectorAll("[data-theme-toggle]").forEach((b) => {
+    b.setAttribute("aria-label", label);
+    if (b.hasAttribute("data-tip")) b.setAttribute("data-tip", label);
+  });
+}
+function setThemeColor(theme) {
+  document.querySelector('meta[name="theme-color"]')?.setAttribute("content", theme === "dark" ? "#16121a" : "#f5f6f8");
+}
 function initTheme() {
+  syncThemeButtons();
   document.addEventListener("click", (e) => {
     const btn = e.target.closest("[data-theme-toggle]");
     if (!btn) return;
     const next = currentTheme() === "dark" ? "light" : "dark";
-    const apply = () => {
-      document.documentElement.dataset.theme = next;
-      localStorage.setItem("sb-theme", next);
-      document.querySelector('meta[name="theme-color"]')?.setAttribute("content", next === "dark" ? "#0c1714" : "#f2f5f3");
-    };
-    const root = document.documentElement;
-    if (document.startViewTransition && !reduceMotion()) {
-      root.style.setProperty("--x", `${e.clientX || innerWidth / 2}px`);
-      root.style.setProperty("--y", `${e.clientY || innerHeight / 2}px`);
-      root.classList.add("theme-transition");
-      const vt = document.startViewTransition(apply);
-      vt.finished.finally(() => root.classList.remove("theme-transition"));
-    } else apply();
+    document.documentElement.dataset.theme = next;
+    localStorage.setItem("sb-theme", next);
+    setThemeColor(next);
+    syncThemeButtons();
     window.dispatchEvent(new CustomEvent("themechange", { detail: next }));
     const csrf = document.querySelector('meta[name="csrf-token"]')?.content;
     if (csrf && document.body.dataset.auth === "1") {
@@ -153,6 +157,7 @@ function initTheme() {
       }).catch(() => {});
     }
   });
+  addEventListener("themechange", () => { syncThemeButtons(); setThemeColor(currentTheme()); });
   // Follow the OS when the user hasn't picked a theme explicitly.
   matchMedia("(prefers-color-scheme: dark)").addEventListener("change", (m) => {
     if (localStorage.getItem("sb-theme") || document.documentElement.dataset.pref !== "system") return;
@@ -161,32 +166,10 @@ function initTheme() {
   });
 }
 
-// ---------- Count-up numbers ----------
-export function countUp(el, to, { from = 0, duration = 1100, format = formatMoney } = {}) {
-  if (reduceMotion()) { el.textContent = format(to); return; }
-  const start = performance.now();
-  const ease = (t) => 1 - Math.pow(2, -10 * t);
-  const step = (now) => {
-    const t = Math.min(1, (now - start) / duration);
-    el.textContent = format(from + (to - from) * (t === 1 ? 1 : ease(t)));
-    if (t < 1) requestAnimationFrame(step);
-  };
-  requestAnimationFrame(step);
-}
-function initCountUps() {
-  const els = document.querySelectorAll("[data-countup]");
-  if (!els.length) return;
-  const io = new IntersectionObserver((entries) => {
-    entries.forEach((en) => {
-      if (!en.isIntersecting) return;
-      io.unobserve(en.target);
-      const el = en.target;
-      const value = parseFloat(el.dataset.countup);
-      const fmt = el.dataset.format === "int" ? (n) => Math.round(n).toLocaleString("en-US") : formatMoney;
-      countUp(el, value, { format: fmt, duration: parseInt(el.dataset.duration || "1100", 10) });
-    });
-  });
-  els.forEach((el) => io.observe(el));
+// ---------- Numbers ----------
+// Kept for callers that update a figure in place. Numbers never count up: the new value is set at once.
+export function countUp(el, to, { format = formatMoney } = {}) {
+  el.textContent = format(to);
 }
 
 // ---------- Segmented controls ----------
@@ -214,24 +197,63 @@ function initSegmented() {
   document.fonts?.ready.then(() => document.querySelectorAll(".segmented").forEach(syncSegmented));
 }
 
-// ---------- Buttons ----------
-function initRipples() {
-  document.addEventListener("pointerdown", (e) => {
-    const btn = e.target.closest(".btn, .action");
-    if (!btn || reduceMotion()) return;
-    const r = btn.getBoundingClientRect();
-    const size = Math.max(r.width, r.height);
-    const span = document.createElement("span");
-    span.className = "ripple";
-    span.style.cssText = `width:${size}px;height:${size}px;left:${e.clientX - r.left - size / 2}px;top:${e.clientY - r.top - size / 2}px`;
-    btn.append(span);
-    span.addEventListener("animationend", () => span.remove());
-  });
+// ---------- Confirm dialog ----------
+// Buttons and links with data-confirm="..." ask first in a styled <dialog>.
+// Optional: data-confirm-title, data-confirm-ok (the confirm button's label).
+// The dialog doesn't block like window.confirm(), so the original click is cancelled and,
+// when "Confirm" is pressed, the same action runs directly from that click.
+function initConfirm() {
+  const dialog = document.getElementById("confirm-dialog");
+  let pending = null; // the button or link waiting for an answer
+
+  document.addEventListener("click", (e) => {
+    const trigger = e.target.closest("[data-confirm]");
+    if (!trigger || trigger.dataset.confirmed === "1") return;
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    if (!dialog?.showModal) {
+      if (window.confirm(trigger.dataset.confirm)) proceed(trigger);
+      return;
+    }
+    pending = trigger;
+    dialog.querySelector("#confirm-title").textContent = trigger.dataset.confirmTitle || "Are you sure?";
+    dialog.querySelector("#confirm-text").textContent = trigger.dataset.confirm;
+    dialog.querySelector("[data-dialog-ok]").textContent = trigger.dataset.confirmOk || "Confirm";
+    dialog.showModal();
+  }, true);
+
+  if (dialog) {
+    dialog.querySelector("[data-dialog-ok]").addEventListener("click", (e) => {
+      e.preventDefault();
+      const trigger = pending;
+      pending = null;
+      dialog.close("ok");
+      if (trigger) proceed(trigger);
+    });
+    // Cancel, Escape or the backdrop: nothing happens and focus goes back to the button.
+    dialog.addEventListener("close", () => {
+      if (!pending) return;
+      const trigger = pending;
+      pending = null;
+      trigger.focus?.({ preventScroll: true });
+    });
+  }
+
+  function proceed(trigger) {
+    if (trigger.tagName === "A") { location.href = trigger.href; return; }
+    const form = trigger.form ?? trigger.closest("form");
+    if (!form) return;
+    delete form.dataset.submitted;              // let the double-submit guard see a fresh submit
+    trigger.dataset.confirmed = "1";            // so the repeated click isn't asked again
+    if (trigger.type === "submit") form.requestSubmit(trigger); else form.requestSubmit();
+    delete trigger.dataset.confirmed;
+  }
 }
+
 function initForms() {
   document.addEventListener("submit", (e) => {
     const form = e.target;
-    if (form.dataset.noLoading !== undefined || e.defaultPrevented) return;
+    if (form.method === "dialog" || form.dataset.noLoading !== undefined || e.defaultPrevented) return;
     const btn = e.submitter ?? form.querySelector("[type=submit]");
     if (!btn || !btn.classList.contains("btn")) return;
     if (form.dataset.submitted) { e.preventDefault(); return; } // block double submits
@@ -246,10 +268,6 @@ function initForms() {
     document.querySelectorAll("form[data-submitted]").forEach((f) => delete f.dataset.submitted);
     document.querySelectorAll(".btn.is-loading").forEach((b) => b.classList.remove("is-loading"));
   });
-  document.addEventListener("click", (e) => {
-    const c = e.target.closest("[data-confirm]");
-    if (c && !confirm(c.dataset.confirm)) { e.preventDefault(); e.stopImmediatePropagation(); }
-  }, true);
 }
 
 // ---------- Amount inputs ----------
@@ -292,6 +310,9 @@ function initMisc() {
       target.dataset.shown = shown ? "0" : "1";
       rev.setAttribute("aria-pressed", String(!shown));
       rev.querySelector("use")?.setAttribute("href", shown ? "#i-eye" : "#i-eye-off");
+      const label = rev.querySelector("[data-reveal-label]");
+      if (label) label.textContent = shown ? "Show" : "Hide";
+      rev.setAttribute("aria-label", shown ? "Show full account number" : "Hide account number");
     }
     const copy = e.target.closest("[data-copy]");
     if (copy) {
@@ -310,9 +331,8 @@ export function init() {
   initTheme();
   initPopovers();
   initDrawers();
-  initCountUps();
+  initConfirm();
   initSegmented();
-  initRipples();
   initForms();
   initAmountInputs();
   initMisc();

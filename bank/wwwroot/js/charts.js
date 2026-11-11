@@ -1,5 +1,5 @@
 // Chart.js helpers that follow the design system: colors come from CSS custom properties
-// (so light/dark both work), thin marks, recessive grid, crosshair + tooltip on hover.
+// (so light/dark both work), thin marks, recessive grid, crosshair + tooltip on hover, no entrance animation.
 /* global Chart */
 
 export const cssVar = (name, el = document.documentElement) => getComputedStyle(el).getPropertyValue(name).trim();
@@ -44,7 +44,7 @@ export function baseOptions() {
   return {
     responsive: true,
     maintainAspectRatio: false,
-    animation: matchMedia("(prefers-reduced-motion: reduce)").matches ? false : { duration: 700, easing: "easeOutQuart" },
+    animation: false, // charts appear in place; nothing animates on load
     interaction: { mode: "index", intersect: false },
     layout: { padding: { top: 6 } },
     font: { family: "Manrope" },
@@ -55,7 +55,7 @@ export function baseOptions() {
         titleColor: cssVar("--bg"),
         bodyColor: cssVar("--bg"),
         padding: 10,
-        cornerRadius: 10,
+        cornerRadius: 6,
         displayColors: true,
         boxWidth: 8, boxHeight: 8, boxPadding: 4, usePointStyle: true,
         titleFont: { family: "Manrope", weight: "700" },

@@ -1,7 +1,7 @@
 @model BankAccount
-<a class="acct-card @(Model.IsActive ? "" : "is-closed")" asp-controller="Accounts" asp-action="Details" asp-route-id="@Model.Id" data-account-id="@Model.Id">
+<a class="acct-card @Ui.AccountTone(Model.Type) @(Model.IsActive ? "" : "is-closed")" asp-controller="Accounts" asp-action="Details" asp-route-id="@Model.Id" data-account-id="@Model.Id" aria-label="@Model.Name, @Ui.AccountTypeLabel(Model.Type), balance @Money.Format(Model.Balance). Open account details">
     <span class="acct-top">
-        <span class="acct-icon">@Ui.Icon(Model.Type == AccountType.Goal ? "target" : Ui.AccountIcon(Model))</span>
+        <span class="acct-tile">@Ui.Icon(Ui.AccountIcon(Model))</span>
         @if (Model.IsPrimary) { <span class="chip chip-primary">@Ui.Icon("star", "icon-sm")Primary</span> }
         @if (Model.IsFrozen) { <span class="chip chip-warn">@Ui.Icon("snowflake", "icon-sm")Frozen</span> }
         @if (!Model.IsActive) { <span class="chip">Closed</span> }
@@ -13,11 +13,11 @@
         var pct = (int)((Model.GoalProgress ?? 0) * 100);
         <span class="acct-goal">
             <span class="progress" role="progressbar" aria-valuenow="@pct" aria-valuemin="0" aria-valuemax="100" aria-label="Goal progress"><span style="width:@pct%"></span></span>
-            <span class="acct-meta"><span>@pct% of @Money.Format(goal)</span></span>
+            <span class="acct-meta"><span class="acct-type">Goal</span><span class="num">@pct% of @Money.Format(goal)</span></span>
         </span>
     }
     else
     {
-        <span class="acct-meta"><span>@Ui.AccountTypeLabel(Model.Type)</span><span class="num">@Model.MaskedNumber</span></span>
+        <span class="acct-meta"><span class="acct-type">@Ui.AccountTypeLabel(Model.Type)</span><span class="num">@Model.MaskedNumber</span></span>
     }
 </a>

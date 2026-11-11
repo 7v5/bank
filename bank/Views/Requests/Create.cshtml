@@ -8,7 +8,7 @@
     <form asp-action="Create" method="post" class="card flow-card form" novalidate>
         <div asp-validation-summary="ModelOnly" class="form-errors"></div>
         <div class="field">
-            <label asp-for="Payer">From</label>
+            <label asp-for="Payer">Who should pay you?</label>
             <div class="input-wrap">
                 @Ui.Icon("user")
                 <input asp-for="Payer" class="input" placeholder="&#64;handle or email" autocomplete="off" autocapitalize="off" spellcheck="false" autofocus />
@@ -17,9 +17,9 @@
             <span asp-validation-for="Payer" class="field-error"></span>
         </div>
         <div class="amount-field">
-            <label for="Amount" class="sr-only">Amount</label>
-            <div class="amount-input-wrap">
-                <span class="currency">$</span>
+            <label for="Amount" class="label">Amount</label>
+            <div class="amount-input-wrap" onclick="this.querySelector('input').focus()">
+                <span class="currency" aria-hidden="true">$</span>
                 <input asp-for="Amount" class="amount-input" type="text" inputmode="decimal" placeholder="0" autocomplete="off" value="@Model.Amount?.ToString("0.##")" />
             </div>
             <span asp-validation-for="Amount" class="field-error"></span>
@@ -28,8 +28,9 @@
             </div>
         </div>
         <div class="field">
-            <label asp-for="Note">What's it for? <span class="muted">(optional)</span></label>
-            <input asp-for="Note" class="input" maxlength="140" placeholder="Concert tickets" />
+            <label asp-for="Note">What's it for? <span class="optional">(optional)</span></label>
+            <input asp-for="Note" class="input" maxlength="140" placeholder="For example, concert tickets" />
+            <span class="hint">They'll see this note with your request.</span>
         </div>
         <button type="submit" class="btn btn-primary btn-lg btn-block">Send request</button>
     </form>

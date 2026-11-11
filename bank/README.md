@@ -35,7 +35,7 @@ dotnet test
 
 **Customers**
 - Register, sign in and sign out (custom pages on Identity). Lockout after 5 failed attempts, plus rate-limited sign-in.
-- Dashboard: a total-balance "banknote" with count-up, accounts, this month's money in/out, a balance-over-time chart (30d/90d/6m), a spending donut, a 6-month in/out bar chart, recent activity and requests waiting on you.
+- Dashboard: a claret total-balance panel (with a split bar by account and labeled actions), accounts as rows, this month's money in/out, a balance-over-time chart (30d/90d/6m), a spending donut, a 6-month in/out bar chart, recent activity and requests waiting on you.
 - Accounts: open Checking, Savings or **Goal** accounts (with a target and a progress ring); rename, set primary, close (balance must be $0). Account numbers are masked, with reveal and copy.
 - Money: **Deposit**, **Withdraw**, **Transfer** between your accounts, **Send** to another user by `@handle` or email (live search), each as a details → review → receipt flow.
 - **Requests**: ask someone for money; they pay (one tap) or decline; you can cancel.
@@ -49,8 +49,13 @@ dotnet test
 - Bank-wide ledger and an **audit log** (sign-ins, registrations, password changes, every admin action).
 
 **Design**
-- Custom design system with no CSS framework: self-hosted fonts, light and dark themes (no flash on load, circular reveal when switching), and a responsive layout. Desktop has a sidebar, tablet an icon rail, and phones a bottom tab bar with a "Move money" sheet.
-- Page transitions (View Transitions API), skeleton loaders, toasts, drawers/bottom sheets, and animated success checks. Everything respects `prefers-reduced-motion`.
+- Custom design system ("Claret") with no CSS framework, laid out like a national bank's site: plain header, a deep claret band with a sign-in box on the landing page, account rows with "Available" balances, a security section and a full footer.
+- **Nothing moves unless you act.** No count-ups, page transitions, chart entrance animations or decorative motion. Only hover and press feedback, drawers that slide in when opened, toasts and loading spinners.
+- **Every color has one meaning.** Claret means "you can click it"; slate, eucalyptus and plum mark Checking, Savings and Goal accounts; pine green with "+" is money in; dark with "−" is money out; bronze is pending or frozen; red is an error or something that can't be undone. Category colors were checked for color-blind separation in both themes.
+- One heritage detail: a still guilloché rosette on the balance panel, the landing band and the sign-in panel.
+- Self-hosted Source Serif 4 (headings, balances) and Manrope (everything else). Light and warm-charcoal dark themes with no flash on load.
+- Responsive: desktop sidebar, tablet icon rail with labels, and a phone tab bar with a labeled "Move" sheet. Admin tables become stacked rows on phones.
+- Clarity: buttons name their action ("Review transfer", "Pay $40.00"), icon-only buttons have tooltips, and actions that can't be undone (close account, decline, freeze, lock) ask in an in-page confirm dialog.
 
 ## API
 

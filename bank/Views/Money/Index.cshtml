@@ -2,12 +2,13 @@
     ViewData["Title"] = "Move money";
 }
 <div class="page-head">
-    <div><h1>Move money</h1><p>Pay a friend, move money between your accounts, or add and take out cash.</p></div>
+    <div><h1>Move money</h1><p>Pay someone, move money between your own accounts, or add and take out cash. Each one shows you a review step before anything moves.</p></div>
 </div>
 <div class="money-hub">
-    <a class="hub-item hub-primary" asp-action="Send">
+    <h2 class="hub-group">Pay other people</h2>
+    <a class="hub-item" asp-action="Send">
         <span class="tx-icon">@Ui.Icon("send", "icon-lg")</span>
-        <span><strong>Send money</strong><span>Pay anyone at SimpleBank by handle or email.</span></span>
+        <span><strong>Send money</strong><span>Pay anyone at SimpleBank by @@handle or email.</span></span>
         @Ui.Icon("chevron-right")
     </a>
     <a class="hub-item" asp-controller="Requests" asp-action="Create">
@@ -15,6 +16,18 @@
         <span><strong>Request money</strong><span>Ask someone to pay you back.</span></span>
         @Ui.Icon("chevron-right")
     </a>
+    <a class="hub-item" asp-controller="BillPay" asp-action="Pay">
+        <span class="tx-icon">@Ui.Icon("receipt", "icon-lg")</span>
+        <span><strong>Pay a bill</strong><span>Utilities, rent and other saved payees.</span></span>
+        @Ui.Icon("chevron-right")
+    </a>
+    <a class="hub-item" asp-controller="BillPay" asp-action="Index">
+        <span class="tx-icon">@Ui.Icon("building", "icon-lg")</span>
+        <span><strong>Manage payees</strong><span>Add or remove the companies you pay.</span></span>
+        @Ui.Icon("chevron-right")
+    </a>
+
+    <h2 class="hub-group">Your own accounts</h2>
     <a class="hub-item" asp-action="Transfer">
         <span class="tx-icon">@Ui.Icon("swap", "icon-lg")</span>
         <span><strong>Transfer</strong><span>Between your own accounts, instantly.</span></span>
@@ -28,11 +41,6 @@
     <a class="hub-item" asp-action="Withdraw">
         <span class="tx-icon">@Ui.Icon("cash", "icon-lg")</span>
         <span><strong>Withdraw</strong><span>Take cash out of an account.</span></span>
-        @Ui.Icon("chevron-right")
-    </a>
-    <a class="hub-item" asp-controller="BillPay" asp-action="Index">
-        <span class="tx-icon">@Ui.Icon("receipt", "icon-lg")</span>
-        <span><strong>Pay a bill</strong><span>Utilities, rent and other saved payees.</span></span>
         @Ui.Icon("chevron-right")
     </a>
 </div>

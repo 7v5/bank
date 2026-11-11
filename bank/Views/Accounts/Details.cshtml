@@ -9,13 +9,13 @@
 <a class="back-link" asp-action="Index">@Ui.Icon("arrow-left", "icon-sm") All accounts</a>
 
 <div class="acct-detail">
-    <section class="acct-hero card card-pad">
+    <section class="acct-hero card card-pad @Ui.AccountTone(a.Type)" aria-labelledby="acct-h">
         <div class="acct-hero-top">
-            <span class="acct-icon acct-icon-lg">@Ui.Icon(isGoal ? "target" : Ui.AccountIcon(a), "icon-lg")</span>
+            <span class="acct-tile acct-tile-lg">@Ui.Icon(Ui.AccountIcon(a), "icon-lg")</span>
             <div>
-                <h1>@a.Name</h1>
+                <h1 id="acct-h">@a.Name</h1>
                 <div class="row row-wrap" style="gap:6px;margin-top:6px">
-                    <span class="chip">@Ui.AccountTypeLabel(a.Type)</span>
+                    <span class="chip chip-acct">@Ui.AccountTypeLabel(a.Type)</span>
                     @if (a.IsPrimary) { <span class="chip chip-primary">@Ui.Icon("star", "icon-sm")Primary</span> }
                     @if (a.IsFrozen) { <span class="chip chip-warn">@Ui.Icon("snowflake", "icon-sm")Frozen</span> }
                     @if (!a.IsActive) { <span class="chip">Closed @a.ClosedUtc?.ToLocalTime().ToString("MMM d, yyyy")</span> }
@@ -25,27 +25,29 @@
 
         <div class="acct-hero-body">
             <div>
-                <span class="muted">Available balance</span>
-                <div class="acct-hero-balance num" data-countup="@a.Balance">@Money.Format(a.Balance)</div>
+                <span class="muted">@(isGoal ? "Saved so far" : "Available balance")</span>
+                <div class="acct-hero-balance num">@Money.Format(a.Balance)</div>
                 <div class="acct-number">
                     <span class="muted">Account number</span>
                     <span class="num" id="acct-num" data-full="@a.AccountNumber" data-masked="@a.MaskedNumber">@a.MaskedNumber</span>
-                    <button type="button" class="btn btn-ghost btn-icon btn-sm" data-reveal="acct-num" aria-pressed="false" aria-label="Show account number">@Ui.Icon("eye", "icon-sm")</button>
-                    <button type="button" class="btn btn-ghost btn-icon btn-sm" data-copy="@a.AccountNumber" data-copy-label="Account number copied" aria-label="Copy account number">@Ui.Icon("copy", "icon-sm")</button>
+                    <button type="button" class="btn btn-ghost btn-sm" data-reveal="acct-num" aria-pressed="false" aria-label="Show full account number">@Ui.Icon("eye", "icon-sm")<span data-reveal-label>Show</span></button>
+                    <button type="button" class="btn btn-ghost btn-sm" data-copy="@a.AccountNumber" data-copy-label="Account number copied">@Ui.Icon("copy", "icon-sm")Copy</button>
                 </div>
             </div>
             @if (isGoal)
             {
-                <div class="goal-ring" style="--p:@pct" role="img" aria-label="@pct percent of goal">
-                    <svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="52" class="track" /><circle cx="60" cy="60" r="52" class="fill" pathLength="100" /></svg>
-                    <div><strong class="num">@pct%</strong><small class="muted">of @Money.Format(a.GoalAmount ?? 0)</small></div>
+                <div class="goal-box">
+                    <span class="muted">Goal progress</span>
+                    <strong class="num">@pct%</strong>
+                    <span class="progress" role="progressbar" aria-valuenow="@pct" aria-valuemin="0" aria-valuemax="100" aria-label="Goal progress"><span style="width:@pct%"></span></span>
+                    <small class="num">@Money.Format(a.Balance) of @Money.Format(a.GoalAmount ?? 0)</small>
                 </div>
             }
         </div>
 
         @if (a.IsFrozen)
         {
-            <div class="alert alert-warn">@Ui.Icon("snowflake")<span>This account has been frozen by the bank. You can still receive money, but you can't send or withdraw from it.</span></div>
+            <div class="alert alert-warn">@Ui.Icon("snowflake")<span>The bank has frozen this account. You can still receive money, but you can't send or withdraw from it.</span></div>
         }
 
         @if (a.IsActive)
@@ -53,21 +55,21 @@
             <div class="acct-actions">
                 <a class="btn btn-primary" asp-controller="Money" asp-action="Deposit" asp-route-accountId="@a.Id">@Ui.Icon("arrow-down", "icon-sm")Deposit</a>
                 <a class="btn btn-secondary" asp-controller="Money" asp-action="Withdraw" asp-route-accountId="@a.Id">@Ui.Icon("cash", "icon-sm")Withdraw</a>
-                <a class="btn btn-secondary" asp-controller="Money" asp-action="Transfer" asp-route-from="@a.Id">@Ui.Icon("swap", "icon-sm")Move out</a>
-                <a class="btn btn-secondary" asp-controller="Money" asp-action="Transfer" asp-route-to="@a.Id">@Ui.Icon("arrow-down", "icon-sm")Move in</a>
-                <button type="button" class="btn btn-ghost" data-drawer-open="acct-settings">@Ui.Icon("sliders", "icon-sm")Settings</button>
+                <a class="btn btn-secondary" asp-controller="Money" asp-action="Transfer" asp-route-from="@a.Id">@Ui.Icon("arrow-up-right", "icon-sm")Transfer out</a>
+                <a class="btn btn-secondary" asp-controller="Money" asp-action="Transfer" asp-route-to="@a.Id">@Ui.Icon("arrow-down", "icon-sm")Transfer in</a>
+                <button type="button" class="btn btn-ghost" data-drawer-open="acct-settings" aria-controls="acct-settings">@Ui.Icon("sliders", "icon-sm")Account settings</button>
             </div>
         }
     </section>
 
-    <aside class="acct-stats">
+    <aside class="acct-stats" aria-label="Account summary">
         <div class="card card-pad stat">
-            <span class="muted">In, last 30 days</span>
-            <strong class="num pos" data-countup="@Model.In30">@Money.Format(Model.In30)</strong>
+            <span class="muted">Money in, last 30 days</span>
+            <strong class="num @(Model.In30 > 0 ? "pos" : "")">@(Model.In30 == 0 ? Money.Format(0) : "+" + Money.Format(Model.In30))</strong>
         </div>
         <div class="card card-pad stat">
-            <span class="muted">Out, last 30 days</span>
-            <strong class="num" data-countup="@Model.Out30">@Money.Format(Model.Out30)</strong>
+            <span class="muted">Money out, last 30 days</span>
+            <strong class="num">@(Model.Out30 == 0 ? Money.Format(0) : "−" + Money.Format(Model.Out30))</strong>
         </div>
         <div class="card card-pad stat">
             <span class="muted">Opened</span>
@@ -78,8 +80,8 @@
 
 <section class="card card-pad" aria-labelledby="hist-h" style="margin-top:var(--space-5)">
     <div class="card-head">
-        <h2 id="hist-h">Activity</h2>
-        <a class="link" asp-controller="Transactions" asp-action="Index" asp-route-accountId="@a.Id">Filter and search</a>
+        <h2 id="hist-h">Transactions</h2>
+        <a class="link" asp-controller="Transactions" asp-action="Index" asp-route-accountId="@a.Id">Search and filter in Activity</a>
     </div>
     <div data-results-host>
         <partial name="_TransactionResults" model="results" />
@@ -92,7 +94,7 @@
 {
     <div class="drawer" id="acct-settings" role="dialog" aria-modal="true" aria-labelledby="settings-h" aria-hidden="true">
         <div><div class="sheet-grip"></div>
-            <div class="drawer-head"><h2 id="settings-h">Account settings</h2><button type="button" class="icon-btn" data-drawer-close aria-label="Close">@Ui.Icon("x")</button></div>
+            <div class="drawer-head"><h2 id="settings-h">Account settings</h2><button type="button" class="icon-btn" data-drawer-close aria-label="Close settings">@Ui.Icon("x")</button></div>
         </div>
         <div class="drawer-body stack">
             <form asp-action="Rename" asp-route-id="@a.Id" method="post" class="form">
@@ -104,7 +106,10 @@
                 {
                     <div class="field">
                         <label for="GoalAmount">Goal target</label>
-                        <input id="GoalAmount" name="GoalAmount" class="input num" inputmode="decimal" value="@a.GoalAmount?.ToString("0.00")" required />
+                        <div class="input-wrap">
+                            <span class="handle-at" aria-hidden="true">$</span>
+                            <input id="GoalAmount" name="GoalAmount" class="input num" style="padding-left:28px" inputmode="decimal" value="@a.GoalAmount?.ToString("0.00")" required />
+                        </div>
                     </div>
                 }
                 <button type="submit" class="btn btn-primary">Save changes</button>
@@ -113,15 +118,21 @@
             @if (!a.IsPrimary && !isGoal)
             {
                 <div class="setting-row">
-                    <div><strong>Make primary</strong><p class="muted">Money people send you will land in this account.</p></div>
+                    <div><strong>Make this your primary account</strong><p class="muted">Money people send you will go into this account.</p></div>
                     <form asp-action="MakePrimary" asp-route-id="@a.Id" method="post"><button type="submit" class="btn btn-secondary btn-sm">Make primary</button></form>
                 </div>
             }
 
             <div class="setting-row danger">
-                <div><strong>Close account</strong><p class="muted">The balance must be $0.00 first. Closed accounts keep their history.</p></div>
+                <div>
+                    <strong>Close account</strong>
+                    <p class="muted">@(a.Balance != 0 ? $"Move the {Money.Format(a.Balance)} out first. The balance must be $0.00 to close." : "Closed accounts keep their history. This can't be undone.")</p>
+                </div>
                 <form asp-action="Close" asp-route-id="@a.Id" method="post">
-                    <button type="submit" class="btn btn-soft-danger btn-sm" data-confirm="Close @a.Name? This can't be undone." disabled="@(a.Balance != 0)">Close account</button>
+                    <button type="submit" class="btn btn-danger btn-sm" disabled="@(a.Balance != 0)"
+                            data-confirm-title="Close @a.Name?" data-confirm="The account will be closed for good. Its history stays in Activity. This can't be undone." data-confirm-ok="Close account">
+                        @Ui.Icon("trash", "icon-sm")Close account
+                    </button>
                 </form>
             </div>
         </div>

@@ -1,5 +1,5 @@
 @{
-    ViewData["Title"] = "Banking that shows its work";
+    ViewData["Title"] = "Online banking";
     Layout = null;
 }
 <!DOCTYPE html>
@@ -9,84 +9,172 @@
 </head>
 <body data-auth="0" class="landing-body">
     <partial name="_Icons" />
-    <header class="landing-nav">
-        <a class="brand" href="/"><img class="brand-mark" src="~/img/favicon.svg" alt="" /><span>SimpleBank</span></a>
-        <nav class="row">
-            <button type="button" class="icon-btn theme-toggle" data-theme-toggle aria-label="Toggle dark mode">
-                <svg class="icon sun" aria-hidden="true"><use href="#i-sun" /></svg>
-                <svg class="icon moon" aria-hidden="true"><use href="#i-moon" /></svg>
+    <a class="sr-only" href="#main">Skip to content</a>
+    <header class="site-head">
+        <div class="wrap">
+            <a class="brand" href="/" aria-label="SimpleBank home"><img class="brand-mark" src="~/img/favicon.svg" alt="" /><span>SimpleBank</span></a>
+            <nav class="site-nav" aria-label="Page sections">
+                <a href="#accounts">Accounts</a>
+                <a href="#online-banking">Online banking</a>
+                <a href="#security">Security</a>
+            </nav>
+            <span class="spacer"></span>
+            <button type="button" class="icon-btn theme-toggle" data-theme-toggle data-tip="Switch to dark mode" aria-label="Switch to dark mode">
+                <svg class="icon when-light" aria-hidden="true"><use href="#i-moon" /></svg>
+                <svg class="icon when-dark" aria-hidden="true"><use href="#i-sun" /></svg>
             </button>
-            <a class="btn btn-ghost" asp-controller="Account" asp-action="Login">Sign in</a>
-            <a class="btn btn-primary" asp-controller="Account" asp-action="Register">Open an account</a>
-        </nav>
+            <a class="btn btn-secondary btn-sm hide-sm" asp-controller="Account" asp-action="Login">Sign in</a>
+            <a class="btn btn-primary btn-sm" asp-controller="Account" asp-action="Register">Open an account</a>
+        </div>
     </header>
 
     <main id="main">
-        <section class="hero">
-            <div class="hero-copy">
-                <h1>Banking that shows its work.</h1>
-                <p>Checking, savings and goal accounts with a ledger you can read line by line. Pay friends by their handle, split the bill, and watch your balance move in real time.</p>
-                <div class="row row-wrap">
-                    <a class="btn btn-primary btn-lg" asp-controller="Account" asp-action="Register">Open an account</a>
-                    <a class="btn btn-secondary btn-lg" asp-controller="Account" asp-action="Login">Try the demo</a>
-                </div>
-            </div>
-            <div class="hero-art" aria-hidden="true">
-                <div class="note note-hero">
-                    <svg class="note-rosette" viewBox="-100 -100 200 200">@Ui.Rosette()</svg>
-                    <svg class="note-waves" viewBox="0 0 400 60" preserveAspectRatio="none">@Ui.Waves()</svg>
-                    <div class="note-frame"></div>
-                    <div class="note-content">
-                        <span class="note-label">Total balance</span>
-                        <span class="note-amount num"><span class="note-cur">$</span><span data-countup-int="12480">0</span><sup>.36</sup></span>
-                        <span class="note-meta">3 accounts</span>
+        <section class="hero-band" aria-labelledby="hero-h">
+            <svg class="rosette" viewBox="-100 -100 200 200" aria-hidden="true">@Ui.Rosette()</svg>
+            <div class="wrap">
+                <div>
+                    <h1 id="hero-h">Banking you can read line by line.</h1>
+                    <p class="hero-lede">Checking, savings and goal accounts with a ledger that records every dollar in and out. Pay people by their handle, pay your bills, and see where your money went each month.</p>
+                    <ul class="hero-points">
+                        <li><span class="tick">@Ui.Icon("check", "icon-sm")</span>Open checking, savings or a goal account in minutes</li>
+                        <li><span class="tick">@Ui.Icon("check", "icon-sm")</span>Send money to other customers by @@handle</li>
+                        <li><span class="tick">@Ui.Icon("check", "icon-sm")</span>Every transaction shows the balance after it</li>
+                    </ul>
+                    <div class="hero-ctas">
+                        <a class="btn btn-light" asp-controller="Account" asp-action="Register">Open an account</a>
+                        <a class="btn btn-outline-light" href="#accounts">Compare accounts</a>
                     </div>
-                    <span class="note-denom">SB</span>
                 </div>
-                <div class="float-card fc-1">
-                    <span class="tx-icon cat-People">@Ui.Icon("users", "icon-sm")</span>
-                    <div><strong>Alice Chen sent you $24.50</strong><small>“Lunch at Noodle House”</small></div>
+
+                <section class="signin-box" aria-labelledby="signin-h">
+                    <h2 id="signin-h">Sign in to online banking</h2>
+                    <form asp-controller="Account" asp-action="Login" method="post" class="form" novalidate>
+                        <div class="field">
+                            <label for="Email">Email</label>
+                            <input id="Email" name="Email" type="email" class="input" autocomplete="username" placeholder="you@example.com" required />
+                        </div>
+                        <div class="field">
+                            <label for="Password">Password</label>
+                            <div class="input-wrap">
+                                <input id="Password" name="Password" type="password" class="input" autocomplete="current-password" required />
+                                <button type="button" class="reveal" data-password-toggle aria-label="Show password" aria-pressed="false">Show</button>
+                            </div>
+                        </div>
+                        <label class="checkbox"><input type="checkbox" name="RememberMe" value="true" /> Keep me signed in</label>
+                        <button type="submit" class="btn btn-primary btn-block">Sign in</button>
+                        <p class="secure-note">@Ui.Icon("lock", "icon-sm")After 5 wrong passwords, sign-in locks for 5 minutes.</p>
+                    </form>
+                    <div class="signin-foot">
+                        <span>New to SimpleBank? <a asp-controller="Account" asp-action="Register">Open an account</a></span>
+                        <span>Just looking? <a asp-controller="Account" asp-action="Login">Use a demo account</a></span>
+                    </div>
+                </section>
+            </div>
+        </section>
+
+        <section class="l-section" id="accounts" aria-labelledby="acc-h">
+            <div class="wrap">
+                <div class="l-head">
+                    <h2 id="acc-h">Choose the accounts you need</h2>
+                    <p>Open up to @BankingService.MaxOpenAccounts at once. Each account type has its own color, so you can tell them apart on every screen.</p>
                 </div>
-                <div class="float-card fc-2">
-                    <span class="tx-icon cat-Income">@Ui.Icon("briefcase", "icon-sm")</span>
-                    <div><strong>Payroll deposited</strong><small class="pos num">+$2,350.00</small></div>
+                <div class="products">
+                    <article class="product tone-checking">
+                        <div class="product-head"><span class="acct-tile">@Ui.Icon("wallet")</span><h3>Checking</h3></div>
+                        <p>For everyday spending, paying people and paying bills.</p>
+                        <ul class="facts">
+                            <li>@Ui.Icon("check", "icon-sm")Send money by @@handle or email</li>
+                            <li>@Ui.Icon("check", "icon-sm")Save payees and pay bills from here</li>
+                        </ul>
+                        <a class="btn btn-secondary btn-sm" asp-controller="Account" asp-action="Register">Open a checking account</a>
+                    </article>
+                    <article class="product tone-savings">
+                        <div class="product-head"><span class="acct-tile">@Ui.Icon("vault")</span><h3>Savings</h3></div>
+                        <p>Keep money set aside from what you spend day to day.</p>
+                        <ul class="facts">
+                            <li>@Ui.Icon("check", "icon-sm")Transfer in or out at any time</li>
+                            <li>@Ui.Icon("check", "icon-sm")Shown separately in your total balance</li>
+                        </ul>
+                        <a class="btn btn-secondary btn-sm" asp-controller="Account" asp-action="Register">Open a savings account</a>
+                    </article>
+                    <article class="product tone-goal">
+                        <div class="product-head"><span class="acct-tile">@Ui.Icon("target")</span><h3>Goal</h3></div>
+                        <p>Save toward something specific, like a trip or a new laptop.</p>
+                        <ul class="facts">
+                            <li>@Ui.Icon("check", "icon-sm")Set a target amount and a name</li>
+                            <li>@Ui.Icon("check", "icon-sm")A progress bar shows how close you are</li>
+                        </ul>
+                        <a class="btn btn-secondary btn-sm" asp-controller="Account" asp-action="Register">Start a savings goal</a>
+                    </article>
                 </div>
             </div>
         </section>
 
-        <section class="features" aria-label="What you can do">
-            <article class="feature feature-wide">
-                @Ui.Icon("send", "icon-lg")
-                <h2>Send money by handle</h2>
-                <p>Type <strong>@@alice</strong>, enter an amount and it lands in her primary account instantly. Request money back and she can pay with one tap.</p>
-            </article>
-            <article class="feature">
-                @Ui.Icon("chart", "icon-lg")
-                <h2>See where it goes</h2>
-                <p>Spending by category, income against outgoings, and your balance over 30, 90 or 180 days.</p>
-            </article>
-            <article class="feature">
-                @Ui.Icon("target", "icon-lg")
-                <h2>Save toward something</h2>
-                <p>Open a goal account, set a target and track progress as you move money in.</p>
-            </article>
-            <article class="feature">
-                @Ui.Icon("shield", "icon-lg")
-                <h2>Built like a ledger</h2>
-                <p>Every movement is a pair of entries that nets to zero, written in one database transaction.</p>
-            </article>
+        <section class="l-section" id="online-banking" aria-labelledby="bank-h">
+            <div class="wrap preview-split">
+                <div>
+                    <div class="l-head" style="margin-bottom:12px">
+                        <h2 id="bank-h">Your home screen after you sign in</h2>
+                        <p>The first thing you see is the total of all your accounts, with the most common actions underneath.</p>
+                    </div>
+                    <ul class="preview-points">
+                        <li>@Ui.Icon("send")<span><strong>Every button names its action</strong><span>"Send money", "Transfer", "Pay a bill". No guessing what an icon means.</span></span></li>
+                        <li>@Ui.Icon("chart")<span><strong>See where it went</strong><span>Spending by category, money in against money out, and your balance over 30, 90 or 180 days.</span></span></li>
+                        <li>@Ui.Icon("list")<span><strong>A full history</strong><span>Search and filter every transaction, and open any one to see its reference number.</span></span></li>
+                    </ul>
+                </div>
+
+                <div class="window" role="img" aria-label="Example of the SimpleBank home screen with a total balance of $12,480.36 across three accounts">
+                    <div class="window-body" aria-hidden="true">
+                        <div class="balance-panel">
+                            <svg class="rosette" viewBox="-100 -100 200 200">@Ui.Rosette()</svg>
+                            <span class="balance-frame"></span>
+                            <span class="balance-label">Total balance, 3 accounts</span>
+                            <span class="balance-amount num">$12,480<span class="cents">.36</span></span>
+                            <span class="balance-meta"><span class="balance-change">@Ui.Icon("arrow-up-right", "icon-sm")+$842.10 in the last 30 days</span></span>
+                            <div class="split"><span class="tone-checking" style="flex:.258"></span><span class="tone-savings" style="flex:.613"></span><span class="tone-goal" style="flex:.129"></span></div>
+                            <div class="balance-actions">
+                                <span class="pa pa-main">@Ui.Icon("send", "icon-sm")Send money</span>
+                                <span class="pa">@Ui.Icon("swap", "icon-sm")Transfer</span>
+                                <span class="pa">@Ui.Icon("arrow-down", "icon-sm")Deposit</span>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="acct-row tone-checking"><span class="acct-tile">@Ui.Icon("wallet", "icon-sm")</span><span class="acct-row-main"><strong>Everyday Checking</strong><small class="num">Checking •••• 4821</small></span><span class="acct-row-bal num">$3,214.80<small>Available</small></span></div>
+                            <div class="acct-row tone-savings"><span class="acct-tile">@Ui.Icon("vault", "icon-sm")</span><span class="acct-row-main"><strong>Rainy Day Savings</strong><small class="num">Savings •••• 9034</small></span><span class="acct-row-bal num">$7,650.00<small>Available</small></span></div>
+                            <div class="acct-row tone-goal"><span class="acct-tile">@Ui.Icon("target", "icon-sm")</span><span class="acct-row-main"><strong>Japan Trip</strong><span class="acct-row-goal"><span class="progress"><span style="width:40%"></span></span><small class="num">40% of $4,000.00</small></span></span><span class="acct-row-bal num">$1,615.56<small>Saved</small></span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="l-section" id="security" aria-labelledby="sec-h">
+            <div class="wrap">
+                <div class="l-head"><h2 id="sec-h">How your account is protected</h2></div>
+                <div class="security">
+                    <div class="sec"><span class="acct-tile">@Ui.Icon("lock")</span><div><h3>Sign-in lockout</h3><p>Five wrong passwords lock sign-in for five minutes, and sign-in attempts are rate-limited.</p></div></div>
+                    <div class="sec"><span class="acct-tile">@Ui.Icon("list")</span><div><h3>Two-sided ledger</h3><p>Every transfer is written as two matching entries in a single database transaction, so money can't go missing.</p></div></div>
+                    <div class="sec"><span class="acct-tile">@Ui.Icon("logout")</span><div><h3>Instant sign-out</h3><p>If the bank locks an account, every open session for it is signed out on the next page load.</p></div></div>
+                </div>
+            </div>
         </section>
     </main>
 
-    <footer class="landing-foot muted">
-        <span>SimpleBank is a class project. No real money moves here.</span>
-        <a href="/scalar">API reference</a>
+    <footer class="site-foot">
+        <div class="wrap foot-cols">
+            <div><a class="brand" href="/"><img class="brand-mark" src="~/img/favicon.svg" alt="" style="width:28px;height:28px" /><span>SimpleBank</span></a><p>A class project for a server-side web development course.</p></div>
+            <div><h3>Accounts</h3><ul><li><a href="#accounts">Checking</a></li><li><a href="#accounts">Savings</a></li><li><a href="#accounts">Savings goals</a></li></ul></div>
+            <div><h3>Online banking</h3><ul><li><a asp-controller="Account" asp-action="Login">Sign in</a></li><li><a asp-controller="Account" asp-action="Register">Open an account</a></li><li><a href="#security">Security</a></li></ul></div>
+            <div><h3>Developers</h3><ul><li><a href="/scalar">API reference</a></li></ul></div>
+        </div>
+        <div class="wrap legal">
+            <span>SimpleBank is not a real bank. No real money moves, and accounts are not insured.</span>
+            <span>Demo data only. Don't enter real personal or financial information.</span>
+        </div>
     </footer>
+    <div class="toasts" aria-live="polite"></div>
     <script type="module" src="~/js/app.js" asp-append-version="true"></script>
-    <script type="module">
-        import { countUp } from "/js/ui.js";
-        document.querySelectorAll("[data-countup-int]").forEach((el) =>
-            setTimeout(() => countUp(el, +el.dataset.countupInt, { format: (n) => Math.round(n).toLocaleString("en-US"), duration: 1600 }), 500));
-    </script>
+    <script type="module" src="~/js/auth.js" asp-append-version="true"></script>
 </body>
 </html>

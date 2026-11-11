@@ -6,7 +6,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <meta name="color-scheme" content="light dark" />
-<meta name="theme-color" content="#f2f5f3" />
+<meta name="theme-color" content="#f5f6f8" />
 <meta name="csrf-token" content="@tokens.RequestToken" />
 <title>@(ViewData["Title"] is string t ? $"{t} · SimpleBank" : "SimpleBank")</title>
 @* Applies the saved theme before first paint so there is no light/dark flash. *@
@@ -19,12 +19,12 @@
             var choice = saved || pref;
             var dark = choice === "dark" || (choice === "system" && matchMedia("(prefers-color-scheme: dark)").matches);
             root.dataset.theme = dark ? "dark" : "light";
-            if (dark) document.querySelector('meta[name="theme-color"]').setAttribute("content", "#0c1714");
+            if (dark) document.querySelector('meta[name="theme-color"]').setAttribute("content", "#16121a");
         } catch (e) { root.dataset.theme = "light"; }
     })();
 </script>
 <link rel="preload" href="~/fonts/manrope-var.woff2" as="font" type="font/woff2" crossorigin />
-<link rel="preload" href="~/fonts/bricolage-var.woff2" as="font" type="font/woff2" crossorigin />
+<link rel="preload" href="~/fonts/sourceserif4-var.woff2" as="font" type="font/woff2" crossorigin />
 <link rel="icon" href="~/img/favicon.svg" type="image/svg+xml" />
 <link rel="stylesheet" href="~/css/app.css" asp-append-version="true" />
 <link rel="stylesheet" href="~/css/pages.css" asp-append-version="true" />

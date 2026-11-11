@@ -6,17 +6,17 @@
 else
 {
     <div class="table-wrap">
-        <table class="table">
+        <table class="table table-stack">
             <thead><tr><th>When</th><th>Who</th><th>Action</th><th class="hide-sm">Details</th><th class="hide-sm">IP</th></tr></thead>
             <tbody>
                 @foreach (var a in Model)
                 {
                     <tr>
-                        <td class="num" style="white-space:nowrap">@a.CreatedUtc.ToLocalTime().ToString("MMM d, h:mm tt", Money.Culture)</td>
-                        <td>@(a.ActorName ?? "System")</td>
-                        <td><span class="chip @(a.Action.StartsWith("account.") ? "chip-brass" : a.Action.Contains("lock") ? "chip-neg" : "chip-primary")">@a.Action</span></td>
-                        <td class="hide-sm">@a.Details</td>
-                        <td class="hide-sm num muted">@a.IpAddress</td>
+                        <td class="num" data-label="When" style="white-space:nowrap">@a.CreatedUtc.ToLocalTime().ToString("MMM d, h:mm tt", Money.Culture)</td>
+                        <td data-label="Who">@(a.ActorName ?? "System")</td>
+                        <td data-label="Action"><span class="chip @(a.Action.StartsWith("account.") ? "chip-tan" : a.Action.Contains("lock") ? "chip-neg" : "")">@a.Action</span></td>
+                        <td class="hide-sm" data-label="Details">@a.Details</td>
+                        <td class="hide-sm num muted" data-label="IP">@a.IpAddress</td>
                     </tr>
                 }
             </tbody>

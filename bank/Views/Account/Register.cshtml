@@ -5,7 +5,7 @@
 }
 <div class="auth-card">
     <h1>Open an account</h1>
-    <p class="auth-lede">It takes a minute. You'll start with a free checking account.</p>
+    <p class="auth-lede">It takes about a minute. You'll start with a checking account.</p>
 
     <form asp-action="Register" method="post" class="form" novalidate>
         <div asp-validation-summary="ModelOnly" class="form-errors"></div>
@@ -20,7 +20,7 @@
                 <span class="handle-at" aria-hidden="true">@@</span>
                 <input asp-for="Handle" class="input" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="jordan" />
             </div>
-            <span class="hint">Friends send you money with this.</span>
+            <span class="hint">People send you money with this, for example @@jordan.</span>
             <span asp-validation-for="Handle" class="field-error"></span>
         </div>
         <div class="field">
@@ -42,7 +42,7 @@
         </div>
         <div class="pw-meter" id="pw-meter" data-score="0">
             <div class="pw-bars"><span></span><span></span><span></span><span></span></div>
-            <span class="hint">At least 8 characters, with an uppercase letter and a number.</span>
+            <span class="hint"><span class="pw-label" data-strength-label aria-live="polite"></span> At least 8 characters, with an uppercase letter and a number.</span>
         </div>
         <button type="submit" class="btn btn-primary btn-lg btn-block">Create account</button>
     </form>
