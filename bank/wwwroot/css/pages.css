@@ -573,7 +573,7 @@
 .statement-table .cell-main .muted { display: block; font-size: 0.82rem; }
 .print-only { display: none; }
 @media print {
-  .sidebar, .topbar, .bottom-nav, .no-print, .toasts, .drawer, .confirm-dialog { display: none !important; }
+  .sidebar, .topbar, .bottom-nav, .no-print, .toasts, .drawer, .confirm-dialog, .pager-pages { display: none !important; }
   .app, .main-col, .content { display: block; margin: 0; padding: 0; }
   body { background: #fff; color: #000; }
   .card { border: 0; box-shadow: none; padding: 0; }

@@ -316,6 +316,7 @@ function initMisc() {
       if (label) label.textContent = shown ? "Show" : "Hide";
       rev.setAttribute("aria-label", shown ? "Show full account number" : "Hide account number");
     }
+    if (e.target.closest("[data-print]")) window.print();
     const copy = e.target.closest("[data-copy]");
     if (copy) {
       try { await navigator.clipboard.writeText(copy.dataset.copy); toast("success", "Copied", copy.dataset.copyLabel || ""); }
