@@ -10,13 +10,14 @@
     <div class="card card-pad receipt" aria-label="Receipt">
         <dl class="detail-list">
             @if (Model.From is not null) { <dt>From</dt><dd>@Model.From</dd> }
-            @if (Model.To is not null) { <dt>To</dt><dd>@Model.To</dd> }
+            @if (Model.To is not null) { <dt>@(Model.Kind == "Request" ? "Asked" : "To")</dt><dd>@Model.To</dd> }
             @if (!string.IsNullOrWhiteSpace(Model.Memo)) { <dt>Note</dt><dd>@Model.Memo</dd> }
             <dt>When</dt><dd>@Model.PostedUtc.ToLocalTime().ToString("MMM d, yyyy 'at' h:mm tt", Money.Culture)</dd>
             @if (Model.NewBalance is { } nb)
             {
                 <dt>@(Model.Kind == "Deposit" ? "New balance" : "Remaining balance")</dt><dd class="num">@Money.Format(nb)</dd>
             }
+            @if (Model.Kind == "Request") { <dt>Status</dt><dd>Waiting for them to pay. We'll tell you when they do.</dd> }
             <dt>Reference</dt>
             <dd><button type="button" class="btn btn-ghost btn-sm" data-copy="@Model.Reference" data-copy-label="@Model.Reference" aria-label="Copy reference @Model.Reference"><span class="num">@Model.Reference</span>@Ui.Icon("copy", "icon-sm")</button></dd>
         </dl>
@@ -26,6 +27,10 @@
         @if (Model.AccountId is { } id)
         {
             <a class="btn btn-secondary btn-lg" asp-controller="Accounts" asp-action="Details" asp-route-id="@id">View account</a>
+        }
+        @if (Model.Kind == "Request")
+        {
+            <a class="btn btn-secondary btn-lg" asp-controller="Requests" asp-action="Index" asp-route-tab="outgoing">See your requests</a>
         }
         <a class="btn btn-primary btn-lg" asp-controller="Dashboard" asp-action="Index">Back to home</a>
     </div>

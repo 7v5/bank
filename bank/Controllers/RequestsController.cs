@@ -50,8 +50,9 @@ public class RequestsController(ApplicationDbContext db, IMoneyRequestService re
         MoneyRequest? created = null;
         if (ModelState.IsValid && await TryBankAsync(async () => created = await requests.CreateAsync(Uid, vm.Payer, vm.Amount!.Value, vm.Note)))
         {
-            Flash($"Requested {Money.Format(created!.Amount)} from {created.Payer.FirstName}", "We'll let you know when they respond.");
-            return RedirectToAction(nameof(Index), new { tab = "outgoing" });
+            TempData["Receipt"] = JsonSerializer.Serialize(new ReceiptViewModel("Request", $"Request sent to {created!.Payer.FirstName}", created.Amount, null,
+                $"{created.Payer.FullName} (@{created.Payer.Handle})", created.Note, $"REQ-{created.Id:D6}", null, clock.GetUtcNow().UtcDateTime, null));
+            return RedirectToAction("Done", "Money");
         }
         return View(vm);
     }
