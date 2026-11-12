@@ -148,7 +148,7 @@
                         {
                             <li>
                                 <span class="sec-icon @(e.Action == "auth.lockout" ? "is-warn" : "")">@Ui.Icon(e.Action.StartsWith("auth.login") ? "login" : e.Action == "auth.lockout" ? "alert" : "shield", "icon-sm")</span>
-                                <span><strong>@EventLabel(e.Action)</strong><small class="muted">@Ui.Ago(e.CreatedUtc, now)@(e.IpAddress is null ? "" : $", from {e.IpAddress}")</small></span>
+                                <span><strong>@EventLabel(e.Action)</strong><small class="muted">@Ui.Ago(e.CreatedUtc, now)@(Ui.IpLabel(e.IpAddress) is { } where ? $", from {where}" : "")</small></span>
                             </li>
                         }
                     </ul>

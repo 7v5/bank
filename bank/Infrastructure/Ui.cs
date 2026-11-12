@@ -13,6 +13,14 @@ public static class Ui
     public static IHtmlContent Icon(string name, string? extraClass = null) =>
         new HtmlString($"<svg class=\"icon {extraClass}\" aria-hidden=\"true\"><use href=\"#i-{name}\"/></svg>");
 
+    /// <summary>Where a sign-in came from, in words: loopback addresses read as "this computer".</summary>
+    public static string? IpLabel(string? ip) => ip switch
+    {
+        null or "" => null,
+        "::1" or "127.0.0.1" or "::ffff:127.0.0.1" => "this computer",
+        _ => ip
+    };
+
     public static string CategoryIcon(TransactionCategory c) => c switch
     {
         TransactionCategory.Income => "briefcase",
