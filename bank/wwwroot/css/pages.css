@@ -123,25 +123,40 @@
   .legend { width: 100%; }
 }
 
-/* ---------- Accounts page: cards with a color top edge ---------- */
-.acct-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: var(--space-4); }
-.acct-card {
-  position: relative; display: flex; flex-direction: column; gap: 4px; padding: 18px; min-height: 176px;
-  border-radius: var(--r-md); background: var(--surface); border: 1px solid var(--line); border-top: 4px solid var(--acct, var(--line-strong)); color: var(--ink);
-  transition: border-color var(--dur-1), background-color var(--dur-1);
-}
-.acct-card:hover { text-decoration: none; border-color: var(--acct, var(--line-strong)); border-top-color: var(--acct, var(--line-strong)); }
-.acct-top { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin-bottom: auto; min-height: 38px; }
-.acct-top .acct-tile { margin-right: auto; }
-.acct-type { font-size: 0.8rem; font-weight: 750; color: var(--acct); }
-.acct-name { font-weight: 750; margin-top: 14px; }
+/* ---------- Accounts page: one full-width panel per account ---------- */
+/* Three equal parts: who it is | what it did lately | balance and next steps. Stacks when the list is narrow. */
+.acct-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: var(--space-4); } /* admin customer page */
 .acct-balance { font-family: var(--font-display); font-size: 1.6rem; font-weight: 650; }
-.acct-meta { display: flex; justify-content: space-between; gap: 8px; color: var(--ink-3); font-size: 0.84rem; }
-.acct-goal { display: flex; flex-direction: column; gap: 6px; margin-top: 4px; }
-.acct-card.is-closed { opacity: 0.65; }
-.acct-new { border-style: dashed; border-top-width: 1px; background: transparent; justify-content: center; align-items: flex-start; }
-.acct-new .acct-tile { background: var(--primary-soft); color: var(--primary); }
-.acct-new .acct-name { margin-top: 10px; color: var(--primary); }
+.acct-list { display: grid; gap: var(--space-4); container-type: inline-size; }
+.acct-panel { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1.6fr) minmax(0, 1fr); border-left: 4px solid var(--acct); overflow: hidden; }
+.acct-panel > div { padding: 20px 22px; min-width: 0; }
+.acct-panel-id { display: grid; gap: 10px; align-content: start; }
+.acct-panel-who { display: flex; align-items: center; gap: 12px; }
+.acct-panel-who a { font-weight: 750; font-size: 1.05rem; color: var(--ink); }
+.acct-panel-who small { display: block; color: var(--ink-3); font-size: 0.84rem; }
+.acct-panel-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.acct-next { display: flex; align-items: flex-start; gap: 8px; padding: 8px 10px; font-size: 0.84rem; color: var(--ink-2); background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--r-sm); }
+.acct-next .icon { color: var(--ink-3); margin-top: 2px; }
+a.acct-next:hover { border-color: var(--line-strong); color: var(--ink); text-decoration: none; }
+.acct-panel-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; align-content: center; border-left: 1px solid var(--line); border-right: 1px solid var(--line); }
+.acct-panel-stats > div { display: grid; gap: 2px; align-content: start; }
+.acct-panel-stats .lbl { font-size: 0.78rem; font-weight: 600; color: var(--ink-3); }
+.acct-panel-stats b { font-size: 1rem; }
+.acct-panel-stats > .acct-panel-goal { grid-column: 1 / -1; gap: 6px; }
+.acct-panel-bal { display: grid; gap: 12px; align-content: center; justify-items: end; text-align: right; background: var(--surface-2); }
+.acct-panel-amount { font-family: var(--font-display); font-size: 1.75rem; font-weight: 650; line-height: 1.15; }
+.acct-panel-acts { display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 8px; }
+.acct-panel-why { display: inline-flex; align-items: center; gap: 6px; font-size: 0.84rem; font-weight: 700; color: var(--warning); }
+.acct-panel.is-closed { opacity: 0.7; }
+@container (max-width: 820px) {
+  .acct-panel { grid-template-columns: minmax(0, 1fr); }
+  .acct-panel > div { padding: 16px; }
+  .acct-panel-stats { border: 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+  .acct-panel-bal { justify-items: stretch; text-align: left; }
+  .acct-panel-acts { justify-content: stretch; }
+  .acct-panel-acts .btn { flex: 1; }
+}
+@container (max-width: 400px) { .acct-panel-stats { grid-template-columns: 1fr 1fr; } }
 .closed-accounts { margin-top: var(--space-6); }
 .closed-accounts summary { cursor: pointer; display: inline-flex; align-items: center; gap: 6px; min-height: 36px; font-weight: 700; color: var(--ink-2); margin-bottom: var(--space-4); list-style: none; }
 .closed-accounts summary::-webkit-details-marker { display: none; }

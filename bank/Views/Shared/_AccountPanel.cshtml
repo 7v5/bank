@@ -1,0 +1,108 @@
+@model AccountSummary
+@{
+    // One full-width account panel on the Accounts page: who it is | what it did lately | balance and next steps.
+    var a = Model.Account;
+    var isGoal = a.Type == AccountType.Goal;
+    var blocked = a.IsFrozen || a.LockedByOwner;
+    var n = Model.Next;
+    string? nextText = null;
+    if (n is not null)
+    {
+        var on = n.NextRunDate.ToString("MMM d", Money.Culture);
+        nextText = n.ToAccountId == a.Id
+            ? $"Next: {Money.Format(n.Amount)} in from {n.FromAccount.Name} on {on}"
+            : n.Kind == ScheduleKind.Bill
+                ? $"Next: {Money.Format(n.Amount)} to {n.Payee?.Name} on {on}"
+                : $"Next: {Money.Format(n.Amount)} to {n.ToAccount?.Name} on {on}";
+    }
+    var pct = (int)((a.GoalProgress ?? 0) * 100);
+    var toGo = Math.Max((a.GoalAmount ?? 0) - a.Balance, 0);
+    string Signed(decimal v, bool money_in) => v == 0 ? Money.Format(0) : (money_in ? "+" : "−") + Money.Format(v);
+}
+<article class="card acct-panel @Ui.AccountTone(a.Type) @(a.IsActive ? "" : "is-closed")" aria-labelledby="acct-@a.Id">
+    <div class="acct-panel-id">
+        <div class="acct-panel-who">
+            <span class="acct-tile">@Ui.Icon(Ui.AccountIcon(a))</span>
+            <div>
+                <a id="acct-@a.Id" asp-action="Details" asp-route-id="@a.Id">@a.Name</a>
+                <small class="num">@Ui.AccountTypeLabel(a.Type) @a.MaskedNumber</small>
+            </div>
+        </div>
+        @if (a.IsPrimary || a.IsFrozen || a.LockedByOwner || !a.IsActive)
+        {
+            <div class="acct-panel-chips">
+                @if (a.IsPrimary) { <span class="chip chip-primary">@Ui.Icon("star", "icon-sm")Primary</span> }
+                @if (a.IsFrozen) { <span class="chip chip-warn">@Ui.Icon("snowflake", "icon-sm")Frozen</span> }
+                @if (a.LockedByOwner) { <span class="chip chip-warn">@Ui.Icon("lock", "icon-sm")Locked</span> }
+                @if (!a.IsActive) { <span class="chip">Closed @a.ClosedUtc?.ToLocalTime().ToString("MMM d, yyyy", Money.Culture)</span> }
+            </div>
+        }
+        @if (a.IsActive)
+        {
+            @if (nextText is not null)
+            {
+                <a class="acct-next" asp-controller="Scheduled" asp-action="Index">@Ui.Icon("calendar", "icon-sm")<span>@nextText</span></a>
+            }
+            else if (isGoal)
+            {
+                <a class="acct-next" asp-controller="Money" asp-action="Transfer" asp-route-to="@a.Id" asp-route-when="later">@Ui.Icon("calendar", "icon-sm")<span>Nothing scheduled. Set up a monthly transfer to reach it sooner.</span></a>
+            }
+            else
+            {
+                <span class="acct-next">@Ui.Icon("calendar", "icon-sm")<span>Nothing scheduled.</span></span>
+            }
+        }
+    </div>
+
+    <div class="acct-panel-stats">
+        <div><span class="lbl">In, 30 days</span><b class="num @(Model.In30 > 0 ? "pos" : "")">@Signed(Model.In30, true)</b></div>
+        @if (isGoal)
+        {
+            <div><span class="lbl">To go</span><b class="num">@(toGo == 0 ? "Goal reached" : Money.Format(toGo))</b></div>
+        }
+        else
+        {
+            <div><span class="lbl">Out, 30 days</span><b class="num">@Signed(Model.Out30, false)</b></div>
+        }
+        @if (Model.InterestRate > 0)
+        {
+            <div><span class="lbl">Interest this year</span><b class="num @(Model.InterestThisYear > 0 ? "pos" : "")">@Signed(Model.InterestThisYear, true)</b></div>
+        }
+        else
+        {
+            <div><span class="lbl">Scheduled</span><b class="num">@(Model.ScheduledCount == 0 ? "None" : Model.ScheduledCount == 1 ? "1 payment" : $"{Model.ScheduledCount} payments")</b></div>
+        }
+        @if (isGoal)
+        {
+            <div class="acct-panel-goal">
+                <span class="progress" role="progressbar" aria-valuenow="@pct" aria-valuemin="0" aria-valuemax="100" aria-label="@a.Name goal progress"><span style="width:@pct%"></span></span>
+                <span class="lbl num">@pct% of @Money.Format(a.GoalAmount ?? 0)</span>
+            </div>
+        }
+    </div>
+
+    <div class="acct-panel-bal">
+        <div>
+            <span class="muted">@(isGoal ? "Saved" : "Available")@(Model.InterestRate > 0 ? $" · {Ui.Rate(Model.InterestRate)} a year" : "")</span>
+            <div class="acct-panel-amount num">@Money.Format(a.Balance)</div>
+        </div>
+        @if (a.IsActive)
+        {
+            <div class="acct-panel-acts">
+                @if (isGoal)
+                {
+                    <a class="btn btn-secondary btn-sm" asp-controller="Money" asp-action="Transfer" asp-route-to="@a.Id">Add money</a>
+                }
+                else if (blocked)
+                {
+                    <span class="acct-panel-why">@Ui.Icon(a.IsFrozen ? "snowflake" : "lock", "icon-sm")@(a.IsFrozen ? "Frozen by the bank" : "Locked by you")</span>
+                }
+                else
+                {
+                    <a class="btn btn-secondary btn-sm" asp-controller="Money" asp-action="Transfer" asp-route-from="@a.Id">Transfer</a>
+                }
+                <a class="btn btn-primary btn-sm" asp-action="Details" asp-route-id="@a.Id" aria-label="View @a.Name">View account</a>
+            </div>
+        }
+    </div>
+</article>

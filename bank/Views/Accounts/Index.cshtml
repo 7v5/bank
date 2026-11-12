@@ -1,33 +1,40 @@
-@model List<BankAccount>
+@model List<AccountSummary>
 @{
     ViewData["Title"] = "Accounts";
-    var open = Model.Where(a => a.IsActive).ToList();
-    var closed = Model.Where(a => !a.IsActive).ToList();
-    var total = open.Sum(a => a.Balance);
+    var open = Model.Where(s => s.Account.IsActive).ToList();
+    var closed = Model.Where(s => !s.Account.IsActive).ToList();
+    var total = open.Sum(s => s.Account.Balance);
 }
 <div class="page-head">
     <div>
         <h1>Accounts</h1>
-        <p><strong class="num">@Money.Format(total)</strong> across @open.Count open @(open.Count == 1 ? "account" : "accounts"). Select an account to see its history and settings.</p>
+        <p><strong class="num">@Money.Format(total)</strong> across @open.Count open @(open.Count == 1 ? "account" : "accounts").</p>
     </div>
     <a class="btn btn-primary" asp-action="Open">@Ui.Icon("plus", "icon-sm")Open an account</a>
 </div>
 
-<div class="acct-grid">
-    @foreach (var a in open) { <partial name="_AccountCard" model="a" /> }
-    <a class="acct-card acct-new" asp-action="Open">
-        <span class="acct-tile">@Ui.Icon("plus")</span>
-        <span class="acct-name">Open a new account</span>
-        <span class="muted">Checking, savings, or a goal to save toward.</span>
-    </a>
-</div>
+@if (open.Count == 0)
+{
+    <div class="card empty">
+        <div class="empty-icon">@Ui.Icon("wallet")</div>
+        <h3>You don't have an open account</h3>
+        <p>Open a checking account to spend from, a savings account, or a goal to save toward.</p>
+        <a class="btn btn-primary" asp-action="Open">Open an account</a>
+    </div>
+}
+else
+{
+    <div class="acct-list">
+        @foreach (var s in open) { <partial name="_AccountPanel" model="s" /> }
+    </div>
+}
 
 @if (closed.Count > 0)
 {
     <details class="closed-accounts">
         <summary>@Ui.Icon("chevron-right", "icon-sm") Show @closed.Count closed @(closed.Count == 1 ? "account" : "accounts")</summary>
-        <div class="acct-grid">
-            @foreach (var a in closed) { <partial name="_AccountCard" model="a" /> }
+        <div class="acct-list">
+            @foreach (var s in closed) { <partial name="_AccountPanel" model="s" /> }
         </div>
     </details>
 }

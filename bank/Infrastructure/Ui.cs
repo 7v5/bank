@@ -13,6 +13,9 @@ public static class Ui
     public static IHtmlContent Icon(string name, string? extraClass = null) =>
         new HtmlString($"<svg class=\"icon {extraClass}\" aria-hidden=\"true\"><use href=\"#i-{name}\"/></svg>");
 
+    /// <summary>A yearly rate fraction as a short percent: 0.025 reads "2.5%".</summary>
+    public static string Rate(decimal fraction) => (fraction * 100m).ToString("0.##", System.Globalization.CultureInfo.InvariantCulture) + "%";
+
     /// <summary>Where a sign-in came from, in words: loopback addresses read as "this computer".</summary>
     public static string? IpLabel(string? ip) => ip switch
     {

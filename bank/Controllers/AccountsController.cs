@@ -8,16 +8,9 @@ using SimpleBankMvc.ViewModels;
 namespace SimpleBankMvc.Controllers;
 
 public class AccountsController(ApplicationDbContext db, IBankingService banking, ITransactionQueryService ledger, IStatementService statements,
-    IInterestService interest, IAuditService audit, TimeProvider clock) : CustomerController
+    IInterestService interest, IAccountOverviewService overview, IAuditService audit, TimeProvider clock) : CustomerController
 {
-    public async Task<IActionResult> Index()
-    {
-        var accounts = await db.BankAccounts.AsNoTracking()
-            .Where(a => a.OwnerId == Uid)
-            .OrderByDescending(a => a.IsActive).ThenByDescending(a => a.IsPrimary).ThenBy(a => a.Type).ThenBy(a => a.Id)
-            .ToListAsync();
-        return View(accounts);
-    }
+    public async Task<IActionResult> Index() => View(await overview.ForOwnerAsync(Uid));
 
     public async Task<IActionResult> Details(int id, [FromQuery] TransactionQuery query)
     {

@@ -87,6 +87,7 @@ builder.Services.AddScoped<IScheduledPaymentService, ScheduledPaymentService>();
 builder.Services.AddScoped<IBudgetService, BudgetService>();
 builder.Services.AddScoped<IStatementService, StatementService>();
 builder.Services.AddScoped<IInterestService, InterestService>();
+builder.Services.AddScoped<IAccountOverviewService, AccountOverviewService>();
 // Makes scheduled payments, pays interest and sends budget alerts in the background.
 builder.Services.AddHostedService<BankClockRunner>();
 builder.Services.AddHttpContextAccessor();

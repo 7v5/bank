@@ -86,7 +86,7 @@
         @if (rate > 0)
         {
             <div class="card card-pad stat">
-                <span class="muted">Interest, @(rate * 100)% a year</span>
+                <span class="muted">Interest, @Ui.Rate(rate) a year</span>
                 <strong class="num @(interestYtd > 0 ? "pos" : "")">@(interestYtd > 0 ? "+" + Money.Format(interestYtd) : Money.Format(0))</strong>
                 <small class="muted">Paid this year. About @Money.Format(interestNext) next month at today's balance.</small>
             </div>

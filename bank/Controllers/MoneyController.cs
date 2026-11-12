@@ -2,6 +2,7 @@ using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SimpleBankMvc.Data;
+using SimpleBankMvc.Models;
 using SimpleBankMvc.Services;
 using SimpleBankMvc.ViewModels;
 
@@ -35,7 +36,12 @@ public class MoneyController(ApplicationDbContext db, IBankingService banking, I
     });
 
     // ---------- Transfer ----------
-    public Task<IActionResult> Transfer(int? from, int? to) => Form(new MoneyFormViewModel { Kind = MoneyKind.Transfer, FromAccountId = from, ToAccountId = to });
+    /// <param name="when">"later" opens the form on "On a date", repeating monthly (used by "Set up a monthly transfer").</param>
+    public Task<IActionResult> Transfer(int? from, int? to, string? when) => Form(new MoneyFormViewModel
+    {
+        Kind = MoneyKind.Transfer, FromAccountId = from, ToAccountId = to,
+        When = when == "later" ? "later" : "now", Frequency = when == "later" ? ScheduleFrequency.Monthly : ScheduleFrequency.Once
+    });
 
     [HttpPost]
     public Task<IActionResult> Transfer(MoneyFormViewModel vm) => vm.IsScheduled ? ScheduleTransfer(vm) : Submit(vm, MoneyKind.Transfer, async () =>
