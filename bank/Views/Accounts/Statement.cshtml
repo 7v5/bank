@@ -1,0 +1,71 @@
+@model Statement
+@{
+    var a = Model.Account;
+    var label = Model.From.ToString("MMMM yyyy", Money.Culture);
+    ViewData["Title"] = $"{a.Name} statement";
+    var months = (List<DateOnly>)ViewBag.Months;
+    string Signed(decimal v) => v > 0 ? "+" + Money.Format(v) : v < 0 ? "−" + Money.Format(-v) : Money.Format(0);
+}
+<a class="back-link no-print" asp-action="Details" asp-route-id="@a.Id">@Ui.Icon("arrow-left", "icon-sm") @a.Name</a>
+
+<div class="page-head">
+    <div><h1>Statement for @label</h1><p>@a.Name, @Ui.AccountTypeLabel(a.Type) account @a.MaskedNumber. @Model.From.ToString("MMM d", Money.Culture) to @Model.To.ToString("MMM d, yyyy", Money.Culture).</p></div>
+    <form method="get" class="row no-print statement-pick">
+        <label for="month" class="sr-only">Statement month</label>
+        <select id="month" name="month" class="select" data-autosubmit>
+            @foreach (var m in months) { <option value="@m.ToString("yyyy-MM")" selected="@(m == Model.From)">@m.ToString("MMMM yyyy", Money.Culture)</option> }
+        </select>
+        <noscript><button type="submit" class="btn btn-secondary">Show month</button></noscript>
+        <button type="button" class="btn btn-primary" data-print>@Ui.Icon("receipt", "icon-sm")Print or save as PDF</button>
+    </form>
+</div>
+
+<section class="card card-pad statement">
+    <header class="statement-head print-only">
+        <strong>SimpleBank</strong>
+        <span>Statement for @label. Printed @DateTime.Now.ToString("MMM d, yyyy", Money.Culture).</span>
+    </header>
+    <div class="statement-totals">
+        <div class="stat"><span class="muted">Opening balance</span><strong class="num">@Money.Format(Model.Opening)</strong></div>
+        <div class="stat"><span class="muted">Money in</span><strong class="num pos">@Signed(Model.MoneyIn)</strong></div>
+        <div class="stat"><span class="muted">Money out</span><strong class="num">@Signed(-Model.MoneyOut)</strong></div>
+        <div class="stat"><span class="muted">Closing balance</span><strong class="num">@Money.Format(Model.Closing)</strong></div>
+    </div>
+
+    @if (Model.Lines.Count == 0)
+    {
+        <div class="empty">
+            <div class="empty-icon">@Ui.Icon("list")</div>
+            <h3>No transactions in @label</h3>
+            <p>Pick another month above, or move money into this account.</p>
+            <a class="btn btn-primary no-print" asp-controller="Money" asp-action="Deposit" asp-route-accountId="@a.Id">Deposit into @a.Name</a>
+        </div>
+    }
+    else
+    {
+        <div class="table-wrap">
+            <table class="table table-stack statement-table">
+                <thead><tr><th>Date</th><th>Description</th><th>Reference</th><th class="r">Amount</th><th class="r">Balance</th></tr></thead>
+                <tbody>
+                    @foreach (var t in Model.Lines)
+                    {
+                        <tr>
+                            <td data-label="Date" class="num">@t.PostedUtc.ToLocalTime().ToString("MMM d", Money.Culture)</td>
+                            <td class="cell-main"><strong>@Ui.TransactionTitle(t)</strong> <span class="muted">@Ui.TypeLabel(t.Type)</span></td>
+                            <td data-label="Reference" class="num muted">@t.Reference</td>
+                            <td data-label="Amount" class="r num @(t.Amount > 0 ? "pos" : "")">@Signed(t.Amount)</td>
+                            <td data-label="Balance" class="r num">@Money.Format(t.BalanceAfter)</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>
+
+@section Scripts {
+    <script type="module">
+        document.querySelector("[data-print]")?.addEventListener("click", () => print());
+        document.querySelector("[data-autosubmit]")?.addEventListener("change", (e) => e.target.form.submit());
+    </script>
+}

@@ -1,66 +1,161 @@
 @model SimpleBankMvc.Controllers.ProfileViewModel
+@inject TimeProvider Clock
 @{
     ViewData["Title"] = "Profile";
     var pw = (SimpleBankMvc.Controllers.ChangePasswordViewModel)ViewBag.Password;
+    var events = (List<AuditLog>)ViewBag.Events;
+    var twoStepOn = (bool)ViewBag.TwoStepOn;
+    var setupKey = ViewBag.SetupKey as string;
+    var recovery = ViewBag.RecoveryCodes as string[];
+    var now = Clock.GetUtcNow().UtcDateTime;
+    string EventLabel(string action) => action switch
+    {
+        "auth.login" => "Signed in",
+        "auth.lockout" => "Locked after failed attempts",
+        "auth.register" => "Opened your profile",
+        "auth.password-changed" => "Changed password",
+        "security.two-step-on" => "Turned on two-step sign-in",
+        "security.two-step-off" => "Turned off two-step sign-in",
+        "security.payee-added" => "Added a payee",
+        "security.account-locked" => "Locked an account",
+        "security.account-unlocked" => "Unlocked an account",
+        _ => action
+    };
 }
-<div class="page-head"><div><h1>Profile &amp; settings</h1><p>Member since @Model.CreatedUtc.ToLocalTime().ToString("MMMM yyyy", Money.Culture).</p></div></div>
+<div class="page-head"><div><h1>Profile and settings</h1><p>Member since @Model.CreatedUtc.ToLocalTime().ToString("MMMM yyyy", Money.Culture).</p></div></div>
 
-<div class="profile-grid">
-    <form asp-action="Index" method="post" class="card card-pad form" novalidate>
-        <h2>Your details</h2>
-        <div asp-validation-summary="ModelOnly" class="form-errors"></div>
-        <div class="field">
-            <label>Email</label>
-            <input class="input" value="@Model.Email" disabled aria-describedby="email-hint" />
-            <span class="hint" id="email-hint">Your email is your sign-in name and can't be changed here.</span>
-        </div>
-        <div class="field">
-            <label asp-for="FullName"></label>
-            <input asp-for="FullName" class="input" />
-            <span asp-validation-for="FullName" class="field-error"></span>
-        </div>
-        <div class="field">
-            <label asp-for="Handle"></label>
-            <div class="input-wrap handle-wrap">
-                <span class="handle-at" aria-hidden="true">&#64;</span>
-                <input asp-for="Handle" class="input" autocapitalize="off" spellcheck="false" />
+<div class="settings-layout">
+    <nav class="settings-nav card" aria-label="Settings sections">
+        <a href="#details">@Ui.Icon("user", "icon-sm")Your details</a>
+        <a href="#appearance">@Ui.Icon("sun", "icon-sm")Appearance</a>
+        <a href="#security">@Ui.Icon("shield", "icon-sm")Security</a>
+        <a asp-controller="Notifications" asp-action="Index">@Ui.Icon("bell", "icon-sm")Notifications</a>
+    </nav>
+
+    <div class="settings-main">
+        <form asp-action="Index" method="post" class="card card-pad form" novalidate id="details">
+            <h2>Your details</h2>
+            <div asp-validation-summary="ModelOnly" class="form-errors"></div>
+            <div class="field">
+                <label for="email-shown">Email</label>
+                <input id="email-shown" class="input" value="@Model.Email" disabled aria-describedby="email-hint" />
+                <span class="hint" id="email-hint">Your email is your sign-in name and can't be changed here.</span>
             </div>
-            <span class="hint">People send you money with this. Changing it changes how they find you.</span>
-            <span asp-validation-for="Handle" class="field-error"></span>
-        </div>
-        <fieldset class="field" style="border:0;padding:0;margin:0">
-            <legend class="label" style="margin-bottom:6px">Appearance</legend>
-            <span class="hint" style="margin-top:-2px;margin-bottom:6px">Pick one to preview it. Select Save profile to keep it.</span>
-            <div class="theme-options">
-                @foreach (var (v, label, icon) in new[] { ("light", "Light", "sun"), ("dark", "Dark", "moon"), ("system", "Match device", "sliders") })
+            <div class="field">
+                <label asp-for="FullName"></label>
+                <input asp-for="FullName" class="input" />
+                <span asp-validation-for="FullName" class="field-error"></span>
+            </div>
+            <div class="field">
+                <label asp-for="Handle"></label>
+                <div class="input-wrap handle-wrap">
+                    <span class="handle-at" aria-hidden="true">&#64;</span>
+                    <input asp-for="Handle" class="input" autocapitalize="off" spellcheck="false" />
+                </div>
+                <span class="hint">People send you money with this. Changing it changes how they find you.</span>
+                <span asp-validation-for="Handle" class="field-error"></span>
+            </div>
+            <fieldset class="field plain-fieldset" id="appearance">
+                <legend class="label">Appearance</legend>
+                <span class="hint">Pick one to preview it. Select Save profile to keep it.</span>
+                <div class="theme-options">
+                    @foreach (var (v, label, icon) in new[] { ("light", "Light", "sun"), ("dark", "Dark", "moon"), ("system", "Match device", "sliders") })
+                    {
+                        <label class="type-option">
+                            <input type="radio" name="ThemePreference" value="@v" checked="@(Model.ThemePreference == v)" data-theme-pref />
+                            <span class="type-card">@Ui.Icon(icon)<strong>@label</strong></span>
+                        </label>
+                    }
+                </div>
+            </fieldset>
+            <button type="submit" class="btn btn-primary">Save profile</button>
+        </form>
+
+        <section class="card card-pad stack" id="security" aria-labelledby="security-h">
+            <h2 id="security-h">Security</h2>
+
+            <div class="setting-block">
+                <div class="setting-row-top">
+                    <div>
+                        <strong>Two-step sign-in</strong>
+                        <p class="muted">@(twoStepOn ? "On. You enter a code from your authenticator app after your password." : "Off. Turn it on to ask for a code from an authenticator app after your password.")</p>
+                    </div>
+                    @if (twoStepOn) { <span class="chip chip-pos">@Ui.Icon("check", "icon-sm")On</span> } else { <span class="chip">Off</span> }
+                </div>
+
+                @if (recovery is { Length: > 0 })
                 {
-                    <label class="type-option">
-                        <input type="radio" name="ThemePreference" value="@v" checked="@(Model.ThemePreference == v)" data-theme-pref />
-                        <span class="type-card">@Ui.Icon(icon)<strong>@label</strong></span>
-                    </label>
+                    <div class="alert alert-info">@Ui.Icon("info")<span>Save these recovery codes somewhere safe. Each one signs you in once if you lose your phone. We won't show them again.</span></div>
+                    <ul class="recovery-codes num">@foreach (var c in recovery) { <li>@c</li> }</ul>
+                    <button type="button" class="btn btn-secondary btn-sm" data-copy="@string.Join(" ", recovery)" data-copy-label="Recovery codes copied">@Ui.Icon("copy", "icon-sm")Copy recovery codes</button>
+                }
+
+                @if (!twoStepOn && setupKey is not null)
+                {
+                    <ol class="setup-steps">
+                        <li>Open an authenticator app on your phone and add an account by entering a setup key.</li>
+                        <li>Enter this key: <span class="setup-key num">@setupKey</span>
+                            <button type="button" class="btn btn-ghost btn-sm" data-copy="@setupKey.Replace(" ", "")" data-copy-label="Setup key copied">@Ui.Icon("copy", "icon-sm")Copy key</button></li>
+                        <li>Type the 6-digit code the app shows to finish.</li>
+                    </ol>
+                    <form asp-action="ConfirmTwoStep" method="post" class="row row-wrap two-step-confirm">
+                        <label for="code" class="sr-only">6-digit code</label>
+                        <input id="code" name="code" class="input num" inputmode="numeric" autocomplete="one-time-code" maxlength="7" placeholder="123456" required />
+                        <button type="submit" class="btn btn-primary">Turn on two-step sign-in</button>
+                    </form>
+                }
+                else if (!twoStepOn)
+                {
+                    <form asp-action="StartTwoStep" method="post"><button type="submit" class="btn btn-secondary">@Ui.Icon("shield", "icon-sm")Set up two-step sign-in</button></form>
+                }
+                else
+                {
+                    <form asp-action="StopTwoStep" method="post">
+                        <button type="submit" class="btn btn-danger btn-sm" data-confirm-title="Turn off two-step sign-in?" data-confirm="Anyone with your password could sign in without a code. Your recovery codes stop working." data-confirm-ok="Turn it off">@Ui.Icon("unlock", "icon-sm")Turn off two-step sign-in</button>
+                    </form>
                 }
             </div>
-        </fieldset>
-        <button type="submit" class="btn btn-primary">Save profile</button>
-    </form>
 
-    <form asp-action="ChangePassword" method="post" class="card card-pad form" novalidate>
-        <h2>Change password</h2>
-        <div class="field">
-            <label for="Password_CurrentPassword">Current password</label>
-            <input id="Password_CurrentPassword" name="Password.CurrentPassword" type="password" class="input" autocomplete="current-password" required />
-        </div>
-        <div class="field">
-            <label for="Password_NewPassword">New password</label>
-            <input id="Password_NewPassword" name="Password.NewPassword" type="password" class="input" autocomplete="new-password" minlength="8" required />
-            <span class="hint">At least 8 characters, with an uppercase letter and a number.</span>
-        </div>
-        <div class="field">
-            <label for="Password_ConfirmPassword">Confirm new password</label>
-            <input id="Password_ConfirmPassword" name="Password.ConfirmPassword" type="password" class="input" autocomplete="new-password" required />
-        </div>
-        <button type="submit" class="btn btn-secondary">Update password</button>
-    </form>
+            <form asp-action="ChangePassword" method="post" class="form setting-block" novalidate>
+                <strong>Change password</strong>
+                <div class="field">
+                    <label for="Password_CurrentPassword">Current password</label>
+                    <input id="Password_CurrentPassword" name="Password.CurrentPassword" type="password" class="input" autocomplete="current-password" required />
+                </div>
+                <div class="field">
+                    <label for="Password_NewPassword">New password</label>
+                    <input id="Password_NewPassword" name="Password.NewPassword" type="password" class="input" autocomplete="new-password" minlength="8" required />
+                    <span class="hint">At least 8 characters, with an uppercase letter and a number.</span>
+                </div>
+                <div class="field">
+                    <label for="Password_ConfirmPassword">Confirm new password</label>
+                    <input id="Password_ConfirmPassword" name="Password.ConfirmPassword" type="password" class="input" autocomplete="new-password" required />
+                </div>
+                <button type="submit" class="btn btn-secondary">Update password</button>
+            </form>
+
+            <div class="setting-block">
+                <strong>Recent security activity</strong>
+                <p class="muted">Sign-ins and changes to your security settings. If something here wasn't you, change your password.</p>
+                @if (events.Count == 0)
+                {
+                    <p class="muted">Nothing yet.</p>
+                }
+                else
+                {
+                    <ul class="sec-events">
+                        @foreach (var e in events)
+                        {
+                            <li>
+                                <span class="sec-icon @(e.Action == "auth.lockout" ? "is-warn" : "")">@Ui.Icon(e.Action.StartsWith("auth.login") ? "login" : e.Action == "auth.lockout" ? "alert" : "shield", "icon-sm")</span>
+                                <span><strong>@EventLabel(e.Action)</strong><small class="muted">@Ui.Ago(e.CreatedUtc, now)@(e.IpAddress is null ? "" : $", from {e.IpAddress}")</small></span>
+                            </li>
+                        }
+                    </ul>
+                }
+            </div>
+        </section>
+    </div>
 </div>
 @section Scripts {
     <script type="module">

@@ -16,6 +16,14 @@ public class LoginViewModel
     public string? ReturnUrl { get; set; }
 }
 
+public class LoginCodeViewModel
+{
+    [Required(ErrorMessage = "Enter the code from your authenticator app.")]
+    public string Code { get; set; } = "";
+    public bool RememberMe { get; set; }
+    public string? ReturnUrl { get; set; }
+}
+
 public class RegisterViewModel
 {
     [Required(ErrorMessage = "Enter your full name."), StringLength(100, MinimumLength = 2), Display(Name = "Full name")]

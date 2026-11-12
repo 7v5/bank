@@ -25,6 +25,9 @@ public class BankAccount
     /// <summary>Set by an administrator. Frozen accounts can receive money but cannot send it.</summary>
     public bool IsFrozen { get; set; }
 
+    /// <summary>Set by the customer to stop money leaving the account. Unlike a freeze, they can undo it themselves.</summary>
+    public bool LockedByOwner { get; set; }
+
     public DateTime OpenedUtc { get; set; } = DateTime.UtcNow;
     public DateTime? ClosedUtc { get; set; }
 
@@ -33,5 +36,7 @@ public class BankAccount
     public ICollection<Transaction> Transactions { get; set; } = new List<Transaction>();
 
     [NotMapped] public decimal? GoalProgress => GoalAmount is > 0 ? Math.Min(1m, Balance / GoalAmount.Value) : null;
+    /// <summary>True when money can't leave: frozen by the bank or locked by the customer.</summary>
+    [NotMapped] public bool IsBlocked => IsFrozen || LockedByOwner;
     [NotMapped] public string MaskedNumber => AccountNumber.Length >= 4 ? $"•••• {AccountNumber[^4..]}" : AccountNumber;
 }

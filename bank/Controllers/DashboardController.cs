@@ -6,7 +6,8 @@ using SimpleBankMvc.ViewModels;
 
 namespace SimpleBankMvc.Controllers;
 
-public class DashboardController(ApplicationDbContext db, IInsightsService insights, IMoneyRequestService requests) : CustomerController
+public class DashboardController(ApplicationDbContext db, IInsightsService insights, IMoneyRequestService requests,
+    IBudgetService budgets, IScheduledPaymentService schedules) : CustomerController
 {
     public async Task<IActionResult> Index()
     {
@@ -30,7 +31,9 @@ public class DashboardController(ApplicationDbContext db, IInsightsService insig
             PendingIncoming = (await requests.IncomingAsync(Uid, pendingOnly: true)).Take(3).ToList(),
             MonthIn = month.MoneyIn,
             MonthOut = month.MoneyOut,
-            BalanceChange30d = history.Count > 1 ? history[^1].Balance - history[0].Balance : null
+            BalanceChange30d = history.Count > 1 ? history[^1].Balance - history[0].Balance : null,
+            Budgets = await budgets.StatusAsync(Uid),
+            Upcoming = await schedules.ListAsync(Uid, activeOnly: true, take: 4)
         });
     }
 }

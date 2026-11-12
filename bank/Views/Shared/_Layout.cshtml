@@ -39,6 +39,10 @@
                     <a class="nav-link" asp-area="" asp-controller="Money" asp-action="Index" aria-current="@Cur("Money")">@Ui.Icon("swap")<span class="nav-label">Move money</span></a>
                     <a class="nav-link" asp-area="" asp-controller="Requests" asp-action="Index" aria-current="@Cur("Requests")">@Ui.Icon("request")<span class="nav-label">Requests</span><span class="badge-dot" data-pending-badge hidden="@(pending == 0)" aria-label="@pending waiting">@pending</span></a>
                     <a class="nav-link" asp-area="" asp-controller="BillPay" asp-action="Index" aria-current="@Cur("BillPay")">@Ui.Icon("receipt")<span class="nav-label">Bill pay</span></a>
+                    <a class="nav-link" asp-area="" asp-controller="Scheduled" asp-action="Index" aria-current="@Cur("Scheduled")">@Ui.Icon("calendar")<span class="nav-label">Scheduled</span></a>
+                    <div class="nav-section">Planning</div>
+                    <div class="nav-sep" aria-hidden="true"></div>
+                    <a class="nav-link" asp-area="" asp-controller="Budgets" asp-action="Index" aria-current="@Cur("Budgets")">@Ui.Icon("chart")<span class="nav-label">Budgets</span></a>
                 }
                 else
                 {

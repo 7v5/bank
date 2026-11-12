@@ -4,6 +4,7 @@
         <span class="acct-tile">@Ui.Icon(Ui.AccountIcon(Model))</span>
         @if (Model.IsPrimary) { <span class="chip chip-primary">@Ui.Icon("star", "icon-sm")Primary</span> }
         @if (Model.IsFrozen) { <span class="chip chip-warn">@Ui.Icon("snowflake", "icon-sm")Frozen</span> }
+        @if (Model.LockedByOwner) { <span class="chip chip-warn">@Ui.Icon("lock", "icon-sm")Locked</span> }
         @if (!Model.IsActive) { <span class="chip">Closed</span> }
     </span>
     <span class="acct-name">@Model.Name</span>

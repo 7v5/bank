@@ -1,15 +1,16 @@
 @model SimpleBankMvc.Controllers.PayeeViewModel
 @{
-    ViewData["Title"] = "Add a payee";
-    var cats = new[] { TransactionCategory.Bills, TransactionCategory.Shopping, TransactionCategory.Transport, TransactionCategory.Entertainment, TransactionCategory.Other };
+    var editing = Model.Id is not null;
+    ViewData["Title"] = editing ? $"Edit {Model.Name}" : "Add a payee";
 }
 <a class="back-link" asp-action="Index">@Ui.Icon("arrow-left", "icon-sm") Bill pay</a>
 <div class="narrow">
-    <div class="page-head"><div><h1>Add a payee</h1><p>Save a company once, then pay it from any account.</p></div></div>
-    <form asp-action="AddPayee" method="post" class="card card-pad form" novalidate>
+    <div class="page-head"><div><h1>@(editing ? "Edit payee" : "Add a payee")</h1><p>@(editing ? "Changes apply to future payments. Past payments keep the details they were made with." : "Save a company once, then pay it from any account.")</p></div></div>
+    <form asp-action="@(editing ? "EditPayee" : "AddPayee")" asp-route-id="@Model.Id" method="post" class="card flow-card form" novalidate>
+        <div asp-validation-summary="ModelOnly" class="form-errors"></div>
         <div class="field">
             <label asp-for="Name">Payee name</label>
-            <input asp-for="Name" class="input" placeholder="City Power &amp; Light" autofocus />
+            <input asp-for="Name" class="input" placeholder="City Power &amp; Light" autofocus="@(!editing)" />
             <span asp-validation-for="Name" class="field-error"></span>
         </div>
         <div class="field">
@@ -18,12 +19,27 @@
             <span class="hint">The account or customer number printed on your bill.</span>
             <span asp-validation-for="AccountReference" class="field-error"></span>
         </div>
-        <div class="field">
-            <label asp-for="Category">Category</label>
-            <select asp-for="Category" class="select">
-                @foreach (var c in cats) { <option value="@c">@c</option> }
-            </select>
-        </div>
-        <button type="submit" class="btn btn-primary btn-lg">Save payee</button>
+        <fieldset class="field cat-pick">
+            <legend class="label">Category</legend>
+            <div class="cat-chips cat-chips-wrap">
+                @foreach (var c in SimpleBankMvc.Controllers.BillPayController.PayeeCategories)
+                {
+                    <label class="cat-chip cat-@c @(Model.Category == c ? "on" : "")">
+                        <input type="radio" name="Category" value="@c" checked="@(Model.Category == c)" class="sr-only" data-chip-radio />
+                        @Ui.Icon(Ui.CategoryIcon(c), "icon-sm")@c
+                    </label>
+                }
+            </div>
+            <span class="hint">Used to group your spending and for budgets.</span>
+        </fieldset>
+        <button type="submit" class="btn btn-primary btn-lg btn-block">@(editing ? "Save changes" : "Save payee")</button>
     </form>
 </div>
+@section Scripts {
+    <script type="module">
+        // Keep the "on" style in step with the checked radio.
+        document.querySelectorAll("[data-chip-radio]").forEach((r) => r.addEventListener("change", () => {
+            document.querySelectorAll("[data-chip-radio]").forEach((x) => x.closest(".cat-chip").classList.toggle("on", x.checked));
+        }));
+    </script>
+}

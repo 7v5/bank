@@ -43,6 +43,7 @@
                 <span class="acct-tile">@Ui.Icon(Ui.AccountIcon(a), "icon-sm")</span>
                 <div style="flex:1;min-width:0"><strong>@a.Name</strong><div class="muted num" style="font-size:.84rem">@Ui.AccountTypeLabel(a.Type) @a.AccountNumber</div></div>
                 @if (a.IsFrozen) { <span class="chip chip-warn">@Ui.Icon("snowflake", "icon-sm")Frozen</span> }
+                @if (a.LockedByOwner) { <span class="chip chip-warn">@Ui.Icon("lock", "icon-sm")Locked by customer</span> }
                 @if (!a.IsActive) { <span class="chip">Closed</span> }
             </div>
             <div class="acct-balance num">@Money.Format(a.Balance)</div>

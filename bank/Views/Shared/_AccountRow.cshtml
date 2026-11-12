@@ -9,11 +9,12 @@
     <span class="acct-row-main">
         <strong>@Model.Name</strong>
         <small class="num">@Ui.AccountTypeLabel(Model.Type) @Model.MaskedNumber</small>
-        @if (Model.IsPrimary || Model.IsFrozen)
+        @if (Model.IsPrimary || Model.IsFrozen || Model.LockedByOwner)
         {
             <span class="acct-row-chips">
                 @if (Model.IsPrimary) { <span class="chip chip-primary">@Ui.Icon("star", "icon-sm")Primary</span> }
                 @if (Model.IsFrozen) { <span class="chip chip-warn">@Ui.Icon("snowflake", "icon-sm")Frozen</span> }
+                @if (Model.LockedByOwner) { <span class="chip chip-warn">@Ui.Icon("lock", "icon-sm")Locked</span> }
             </span>
         }
         @if (isGoal && Model.GoalAmount is { } goal)

@@ -283,6 +283,8 @@ function initAmountInputs() {
     size();
   });
   document.addEventListener("click", (e) => {
+    const wrap = e.target.closest("[data-focus-input]");
+    if (wrap && e.target.tagName !== "INPUT") wrap.querySelector("input")?.focus();
     const b = e.target.closest("[data-amount]");
     if (!b) return;
     const input = document.querySelector(b.dataset.target || ".amount-input");

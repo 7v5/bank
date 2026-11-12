@@ -214,6 +214,28 @@ public static class DbInitializer
             new Notification { UserId = byHandle["bob"].Id, Title = "Jordan Rivera requested $35.00", Body = "“Gas for the road trip”", Icon = "request", Link = "/Requests", CreatedUtc = now.AddDays(-2) });
 
         await db.SaveChangesAsync();
+
+        // ---------- Budgets and scheduled payments for the demo customer ----------
+        var demoAccounts = await db.BankAccounts.Where(a => a.OwnerId == demo.Id && a.IsActive).ToListAsync();
+        var demoChecking = demoAccounts.FirstOrDefault(a => a.IsPrimary) ?? demoAccounts.First();
+        var demoSavings = demoAccounts.FirstOrDefault(a => a.Type == AccountType.Savings && a.Id != demoChecking.Id);
+        var rent = await db.Payees.FirstAsync(p => p.OwnerId == demo.Id && p.Name == "Maple Court Apartments");
+        var internet = await db.Payees.FirstAsync(p => p.OwnerId == demo.Id && p.Name == "FiberNet Internet");
+        var today = DateOnly.FromDateTime(clock.GetLocalNow().DateTime);
+        var firstOfNextMonth = new DateOnly(today.Year, today.Month, 1).AddMonths(1);
+        db.Budgets.AddRange(
+            new Budget { OwnerId = demo.Id, Category = TransactionCategory.Groceries, MonthlyLimit = 450m },
+            new Budget { OwnerId = demo.Id, Category = TransactionCategory.Dining, MonthlyLimit = 200m },
+            new Budget { OwnerId = demo.Id, Category = TransactionCategory.Entertainment, MonthlyLimit = 120m });
+        db.ScheduledPayments.AddRange(
+            new ScheduledPayment { OwnerId = demo.Id, Kind = ScheduleKind.Bill, FromAccountId = demoChecking.Id, PayeeId = rent.Id, Amount = 1450m,
+                Memo = "Rent", Frequency = ScheduleFrequency.Monthly, StartDate = firstOfNextMonth, NextRunDate = firstOfNextMonth, CreatedUtc = now },
+            new ScheduledPayment { OwnerId = demo.Id, Kind = ScheduleKind.Bill, FromAccountId = demoChecking.Id, PayeeId = internet.Id, Amount = 65m,
+                Frequency = ScheduleFrequency.Monthly, StartDate = today.AddDays(5), NextRunDate = today.AddDays(5), CreatedUtc = now });
+        if (demoSavings is not null)
+            db.ScheduledPayments.Add(new ScheduledPayment { OwnerId = demo.Id, Kind = ScheduleKind.Transfer, FromAccountId = demoChecking.Id, ToAccountId = demoSavings.Id,
+                Amount = 200m, Memo = "Pay myself first", Frequency = ScheduleFrequency.Monthly, StartDate = today.AddDays(3), NextRunDate = today.AddDays(3), CreatedUtc = now });
+        await db.SaveChangesAsync();
         _ = admin;
 
         static decimal Round(decimal d) => decimal.Round(d, 2);

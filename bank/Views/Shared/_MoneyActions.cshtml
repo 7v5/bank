@@ -18,6 +18,9 @@
     <a class="action" asp-area="" asp-controller="BillPay" asp-action="Pay">
         <span class="tx-icon">@Ui.Icon("receipt")</span><span><strong>Pay a bill</strong><small>Pay a saved payee</small></span>@Ui.Icon("chevron-right", "icon-sm")
     </a>
+    <a class="action" asp-area="" asp-controller="Scheduled" asp-action="Index">
+        <span class="tx-icon">@Ui.Icon("calendar")</span><span><strong>Scheduled payments</strong><small>See, pause or cancel future payments</small></span>@Ui.Icon("chevron-right", "icon-sm")
+    </a>
     <a class="action" asp-area="" asp-controller="BillPay" asp-action="Index">
         <span class="tx-icon">@Ui.Icon("building")</span><span><strong>Manage payees</strong><small>Add or remove the companies you pay</small></span>@Ui.Icon("chevron-right", "icon-sm")
     </a>

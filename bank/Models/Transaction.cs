@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace SimpleBankMvc.Models;
 
-public enum TransactionType { Deposit, Withdrawal, TransferIn, TransferOut, BillPayment, P2PSent, P2PReceived, Purchase, AdminAdjustment }
+public enum TransactionType { Deposit, Withdrawal, TransferIn, TransferOut, BillPayment, P2PSent, P2PReceived, Purchase, AdminAdjustment, Interest }
 
 public enum TransactionCategory { Income, Groceries, Dining, Bills, Shopping, Transport, Entertainment, People, Transfer, Cash, Other }
 

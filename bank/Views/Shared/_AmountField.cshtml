@@ -1,0 +1,19 @@
+@model AmountFieldModel
+@{
+    var error = ViewData.ModelState.TryGetValue("Amount", out var entry) ? entry.Errors.FirstOrDefault()?.ErrorMessage : null;
+}
+<div class="amount-field">
+    <label for="Amount" class="label">Amount</label>
+    <div class="amount-input-wrap" data-focus-input>
+        <span class="currency" aria-hidden="true">$</span>
+        <input id="Amount" name="Amount" class="amount-input" type="text" inputmode="decimal" placeholder="0" autocomplete="off" value="@Model.Value?.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)" />
+    </div>
+    <span class="field-error" data-valmsg-for="Amount">@error</span>
+    @if (Model.Hint is not null) { <p class="hint">@Model.Hint</p> }
+    @if (Model.Quick.Length > 0)
+    {
+        <div class="quick-amounts" role="group" aria-label="Quick amounts">
+            @foreach (var q in Model.Quick) { <button type="button" data-amount="@q.ToString(System.Globalization.CultureInfo.InvariantCulture)" aria-label="Use @Money.Format(q)">@Money.Format(q).Replace(".00", "")</button> }
+        </div>
+    }
+</div>

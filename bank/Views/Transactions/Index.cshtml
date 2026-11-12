@@ -9,6 +9,10 @@
 }
 <div class="page-head">
     <div><h1>Activity</h1><p>Every transaction across your accounts. Search, filter and sort to find one, then select it to see the details.</p></div>
+    <div class="row">
+        <a class="btn btn-secondary" asp-action="Export" asp-all-route-data="q.ToRouteValues(1)" data-export-link>@Ui.Icon("arrow-down", "icon-sm")Download CSV</a>
+        <a class="btn btn-secondary" asp-controller="Budgets" asp-action="Index">@Ui.Icon("chart", "icon-sm")Budgets</a>
+    </div>
 </div>
 
 <form class="filters card card-pad" method="get" data-filter-form role="search" aria-label="Filter transactions">

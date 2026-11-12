@@ -18,6 +18,7 @@ public interface IBankingService
     Task CloseAccountAsync(string userId, int accountId);
     Task SetPrimaryAsync(string userId, int accountId);
     Task RenameAsync(string userId, int accountId, string name, decimal? goalAmount = null);
+    Task SetOwnerLockAsync(string userId, int accountId, bool locked);
 
     Task<ApplicationUser?> FindRecipientAsync(string query);
     Task<decimal> SentInLast24HoursAsync(string userId);
@@ -205,6 +206,18 @@ public class BankingService(ApplicationDbContext db, LedgerPoster poster, INotif
 
     // ---------- Lookups ----------
 
+    /// <summary>The customer's own lock: stops money leaving the account until they unlock it. Money can still come in.</summary>
+    public async Task SetOwnerLockAsync(string userId, int accountId, bool locked)
+    {
+        var account = await LoadOwnedAsync(userId, accountId);
+        if (account.LockedByOwner == locked) return;
+        account.LockedByOwner = locked;
+        notifications.Add(userId, locked ? $"{account.Name} is locked" : $"{account.Name} is unlocked",
+            locked ? "No money can leave it until you unlock it. Deposits still arrive." : "Payments and transfers out work again.",
+            "shield", $"/Accounts/Details/{account.Id}");
+        await db.SaveChangesAsync();
+    }
+
     public async Task<ApplicationUser?> FindRecipientAsync(string query)
     {
         var q = query.Trim();
@@ -247,6 +260,7 @@ public class BankingService(ApplicationDbContext db, LedgerPoster poster, INotif
     private static void EnsureCanSend(BankAccount account, decimal amount)
     {
         if (account.IsFrozen) throw new BankingException($"{account.Name} is frozen. Outgoing payments are disabled.");
+        if (account.LockedByOwner) throw new BankingException($"{account.Name} is locked. Unlock it to move money out.");
         if (account.Balance < amount) throw new BankingException($"Insufficient funds. {account.Name} has {Money.Format(account.Balance)} available.");
     }
 

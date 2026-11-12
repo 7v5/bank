@@ -1,47 +1,93 @@
-@model List<Payee>
+@model SimpleBankMvc.Controllers.BillPayIndexViewModel
 @inject TimeProvider Clock
 @{
     ViewData["Title"] = "Bill pay";
-    var last = (Dictionary<string, DateTime>)ViewBag.LastPaid;
     var now = Clock.GetUtcNow().UtcDateTime;
 }
 <div class="page-head">
-    <div><h1>Bill pay</h1><p>Your saved payees. Pay any of them from any account, and the payment posts right away.</p></div>
+    <div><h1>Bill pay</h1><p>Your saved payees. Pay any of them from any account, now or on a date you choose.</p></div>
     <div class="row">
         <a class="btn btn-secondary" asp-action="AddPayee">@Ui.Icon("plus", "icon-sm")Add payee</a>
         <a class="btn btn-primary" asp-action="Pay">@Ui.Icon("receipt", "icon-sm")Pay a bill</a>
     </div>
 </div>
-@if (Model.Count == 0)
-{
-    <div class="card empty">
-        <div class="empty-icon">@Ui.Icon("receipt")</div>
-        <h3>No payees yet</h3>
-        <p>Add the companies you pay, like your utility or internet provider.</p>
-        <a class="btn btn-primary" asp-action="AddPayee">Add a payee</a>
+
+<div class="summary-strip">
+    <div class="card card-pad stat">
+        <span class="muted">Bills paid in @now.ToLocalTime().ToString("MMMM", Money.Culture)</span>
+        <strong class="num">@Money.Format(Model.PaidThisMonth)</strong>
+        <small class="muted">@Model.PaymentsThisMonth @(Model.PaymentsThisMonth == 1 ? "payment" : "payments")</small>
     </div>
-}
-else
-{
-    <section class="card payee-list" aria-labelledby="payees-h">
-        <div class="panel-head"><h2 id="payees-h">Saved payees</h2><span class="muted">@Model.Count @(Model.Count == 1 ? "payee" : "payees")</span></div>
-        @foreach (var p in Model)
+    <div class="card card-pad stat">
+        <span class="muted">Next scheduled bill</span>
+        @if (Model.Upcoming.FirstOrDefault() is { } next)
         {
-            <article class="payee">
-                <span class="tx-icon cat-@p.Category">@Ui.Icon(Ui.CategoryIcon(p.Category))</span>
-                <div class="payee-main">
-                    <strong>@p.Name</strong>
-                    <span class="muted num">Reference @p.AccountReference</span>
-                    <span class="muted payee-last">@(last.TryGetValue(p.Name, out var when) ? $"Last paid {Ui.Ago(when, now)}" : "Not paid yet")</span>
-                </div>
-                <div class="payee-actions">
-                    <a class="btn btn-primary btn-sm" asp-action="Pay" asp-route-id="@p.Id" aria-label="Pay @p.Name">Pay</a>
-                    <form asp-action="DeletePayee" asp-route-id="@p.Id" method="post">
-                        <button type="submit" class="btn btn-danger btn-icon btn-sm" aria-label="Remove @p.Name" data-tip="Remove payee"
-                                data-confirm-title="Remove @p.Name?" data-confirm="You won't be able to pay @p.Name until you add them again. Past payments stay in Activity." data-confirm-ok="Remove payee">@Ui.Icon("trash", "icon-sm")</button>
-                    </form>
-                </div>
-            </article>
+            <strong class="num">@Money.Format(next.Amount)</strong>
+            <small class="muted">@next.Payee?.Name on @next.NextRunDate.ToString("MMM d", Money.Culture)</small>
+        }
+        else
+        {
+            <strong>None</strong>
+            <small class="muted">Choose "On a date" when you pay a bill.</small>
+        }
+    </div>
+    <div class="card card-pad stat">
+        <span class="muted">Saved payees</span>
+        <strong class="num">@Model.Payees.Count</strong>
+        <small class="muted">Edit or remove them below</small>
+    </div>
+</div>
+
+<div class="split-layout">
+    @if (Model.Payees.Count == 0)
+    {
+        <div class="card empty">
+            <div class="empty-icon">@Ui.Icon("receipt")</div>
+            <h3>No payees yet</h3>
+            <p>Add the companies you pay, like your utility or internet provider.</p>
+            <a class="btn btn-primary" asp-action="AddPayee">Add a payee</a>
+        </div>
+    }
+    else
+    {
+        <section class="card payee-list" aria-labelledby="payees-h">
+            <div class="panel-head"><h2 id="payees-h">Saved payees</h2><span class="muted">@Model.Payees.Count @(Model.Payees.Count == 1 ? "payee" : "payees")</span></div>
+            @foreach (var p in Model.Payees)
+            {
+                <article class="payee">
+                    <span class="tx-icon cat-@p.Category">@Ui.Icon(Ui.CategoryIcon(p.Category))</span>
+                    <div class="payee-main">
+                        <strong>@p.Name</strong>
+                        <span class="muted num">Reference @p.AccountReference</span>
+                        <span class="muted payee-last">@(Model.LastPaid.TryGetValue(p.Name, out var when) ? $"Last paid {Ui.Ago(when, now)}" : "Not paid yet")</span>
+                    </div>
+                    <div class="payee-actions">
+                        <a class="btn btn-primary btn-sm" asp-action="Pay" asp-route-id="@p.Id" aria-label="Pay @p.Name">Pay</a>
+                        <a class="btn btn-ghost btn-icon btn-sm" asp-action="EditPayee" asp-route-id="@p.Id" aria-label="Edit @p.Name" data-tip="Edit payee">@Ui.Icon("edit", "icon-sm")</a>
+                        <form asp-action="DeletePayee" asp-route-id="@p.Id" method="post">
+                            <button type="submit" class="btn btn-danger btn-icon btn-sm" aria-label="Remove @p.Name" data-tip="Remove payee"
+                                    data-confirm-title="Remove @p.Name?" data-confirm="You won't be able to pay @p.Name until you add them again. Scheduled payments to them are cancelled. Past payments stay in Activity." data-confirm-ok="Remove payee">@Ui.Icon("trash", "icon-sm")</button>
+                        </form>
+                    </div>
+                </article>
+            }
+        </section>
+    }
+
+    <section class="card card-pad" aria-labelledby="upcoming-h">
+        <div class="card-head">
+            <h2 id="upcoming-h">Upcoming bills</h2>
+            <a class="link" asp-controller="Scheduled" asp-action="Index">Manage scheduled payments</a>
+        </div>
+        @if (Model.Upcoming.Count == 0)
+        {
+            <p class="muted">No bills are scheduled. Pay a bill and choose "On a date" to set one up.</p>
+        }
+        else
+        {
+            <div class="sched-compact">
+                @foreach (var s in Model.Upcoming) { <partial name="_ScheduleRow" model="s" /> }
+            </div>
         }
     </section>
-}
+</div>

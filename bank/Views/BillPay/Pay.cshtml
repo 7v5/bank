@@ -1,54 +1,81 @@
 @model SimpleBankMvc.Controllers.BillPayViewModel
 @{
     ViewData["Title"] = "Pay a bill";
+    var ready = Model.Payees.Count > 0 && Model.Accounts.Count > 0;
 }
 <a class="back-link" asp-action="Index">@Ui.Icon("arrow-left", "icon-sm") Bill pay</a>
-<div class="narrow">
-    <div class="page-head"><div><h1>Pay a bill</h1><p>Choose a saved payee, enter the amount, and pick the account to pay from.</p></div></div>
+<div class="narrow flow" data-flow="bill">
+    <div class="page-head"><div><h1>Pay a bill</h1><p>Choose a saved payee, enter the amount, and pick the account to pay from. Pay now or set a date.</p></div></div>
     @if (Model.Payees.Count == 0)
     {
         <div class="card empty"><div class="empty-icon">@Ui.Icon("building")</div><h3>Add a payee first</h3><p>Save the company you want to pay, then come back here.</p><a class="btn btn-primary" asp-action="AddPayee">Add a payee</a></div>
     }
+    else if (Model.Accounts.Count == 0)
+    {
+        <div class="card empty"><div class="empty-icon">@Ui.Icon("wallet")</div><h3>Open an account first</h3><p>You need an account to pay bills from.</p><a class="btn btn-primary" asp-controller="Accounts" asp-action="Open">Open an account</a></div>
+    }
     else
     {
-        <form asp-action="Pay" method="post" class="card flow-card form" novalidate>
+        <partial name="_FlowSteps" model='new FlowStepsModel(["Details", "Review", "Done"])' />
+        <form asp-action="Pay" method="post" class="card flow-card" novalidate data-money-form data-no-loading>
             <input type="hidden" asp-for="IdempotencyKey" />
-            <div asp-validation-summary="ModelOnly" class="form-errors"></div>
-            <div class="field">
-                <label asp-for="PayeeId">Payee</label>
-                <select asp-for="PayeeId" class="select">
-                    <option value="">Choose a payee</option>
-                    @foreach (var p in Model.Payees) { <option value="@p.Id">@p.Name (@p.AccountReference)</option> }
-                </select>
-                <span asp-validation-for="PayeeId" class="field-error"></span>
-            </div>
-            <div class="amount-field">
-                <label for="Amount" class="label">Amount</label>
-                <div class="amount-input-wrap" onclick="this.querySelector('input').focus()">
-                    <span class="currency" aria-hidden="true">$</span>
-                    <input asp-for="Amount" class="amount-input" type="text" inputmode="decimal" placeholder="0" autocomplete="off" value="@Model.Amount?.ToString("0.##")" />
+
+            <div class="flow-step" data-step="1">
+                <div asp-validation-summary="ModelOnly" class="form-errors"></div>
+                <fieldset class="acct-pick-group">
+                    <legend class="label">Payee</legend>
+                    @foreach (var p in Model.Payees)
+                    {
+                        <label class="acct-pick">
+                            <input type="radio" name="PayeeId" value="@p.Id" checked="@(Model.PayeeId == p.Id)" data-name="@p.Name" />
+                            <span class="acct-pick-card">
+                                <span class="tx-icon cat-@p.Category">@Ui.Icon(Ui.CategoryIcon(p.Category), "icon-sm")</span>
+                                <span class="acct-pick-main"><strong>@p.Name</strong><small class="muted num">Reference @p.AccountReference</small></span>
+                            </span>
+                        </label>
+                    }
+                    <span asp-validation-for="PayeeId" class="field-error"></span>
+                    <a class="btn btn-ghost btn-sm add-inline" asp-action="AddPayee">@Ui.Icon("plus", "icon-sm")Add a new payee</a>
+                </fieldset>
+
+                <partial name="_AmountField" model="new AmountFieldModel(Model.Amount, [25m, 50m, 100m, 200m])" />
+
+                <div class="acct-picks">
+                    <partial name="_AccountPicker" model='new AccountPickerModel("FromAccountId", "Pay from", Model.Accounts, Model.FromAccountId)' />
                 </div>
-                <span asp-validation-for="Amount" class="field-error"></span>
+
+                <partial name="_ScheduleFields" model="Model" />
+
+                <div class="field">
+                    <label asp-for="Memo">Note <span class="optional">(optional)</span></label>
+                    <input asp-for="Memo" class="input" maxlength="140" placeholder="For example, November bill" />
+                </div>
+                <button type="submit" class="btn btn-primary btn-lg btn-block" data-to-review>Review payment</button>
             </div>
-            <fieldset class="acct-pick-group">
-                <legend class="label">Pay from</legend>
-                @foreach (var a in Model.Accounts)
-                {
-                    <label class="acct-pick @Ui.AccountTone(a.Type) @(a.IsFrozen ? "is-frozen" : "")">
-                        <input type="radio" name="FromAccountId" value="@a.Id" checked="@(Model.FromAccountId == a.Id)" disabled="@a.IsFrozen" />
-                        <span class="acct-pick-card">
-                            <span class="acct-tile">@Ui.Icon(Ui.AccountIcon(a), "icon-sm")</span>
-                            <span class="acct-pick-main"><strong>@a.Name</strong><small class="muted num">@(a.IsFrozen ? "Frozen, can't pay from it" : $"{Ui.AccountTypeLabel(a.Type)} {a.MaskedNumber}")</small></span>
-                            <span class="num acct-pick-bal">@Money.Format(a.Balance)</span>
-                        </span>
-                    </label>
-                }
-            </fieldset>
-            <div class="field">
-                <label asp-for="Memo">Note <span class="optional">(optional)</span></label>
-                <input asp-for="Memo" class="input" maxlength="140" placeholder="For example, November bill" />
+
+            <div class="flow-step" data-step="2" hidden>
+                <div class="review">
+                    <span class="muted">Check the details. Nothing moves until you confirm.</span>
+                    <div class="review-amount num" data-review-amount>$0.00</div>
+                    <dl class="detail-list">
+                        <dt>To</dt><dd data-review-payee></dd>
+                        <dt>From</dt><dd data-review-from></dd>
+                        <dt>Note</dt><dd data-review-memo></dd>
+                        <dt data-review-now data-review-after-label>Balance after</dt><dd class="num" data-review-now data-review-after></dd>
+                        <dt data-review-later hidden>When</dt><dd data-review-later data-review-when hidden></dd>
+                    </dl>
+                </div>
+                <div class="flow-actions">
+                    <button type="button" class="btn btn-secondary btn-lg" data-back>@Ui.Icon("arrow-left", "icon-sm")Edit details</button>
+                    <button type="submit" class="btn btn-primary btn-lg" data-confirm-submit><span data-review-now>Pay</span><span data-review-later hidden>Schedule</span> <span class="num" data-cta-amount></span></button>
+                </div>
             </div>
-            <button type="submit" class="btn btn-primary btn-lg btn-block">Pay this bill</button>
         </form>
     }
 </div>
+@section Scripts {
+    @if (ready)
+    {
+        <script type="module" src="~/js/money-flow.js" asp-append-version="true"></script>
+    }
+}

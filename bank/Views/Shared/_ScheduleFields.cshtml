@@ -1,0 +1,35 @@
+@model IScheduleInput
+@{
+    var later = Model.When == "later";
+    var tomorrow = DateTime.Now.AddDays(1).ToString("yyyy-MM-dd");
+}
+@* "Now" or "On a date". money-flow.js shows the date fields only for the second choice. *@
+<fieldset class="schedule">
+    <legend class="label">When</legend>
+    <div class="when-options">
+        <label class="type-option">
+            <input type="radio" name="When" value="now" checked="@(!later)" />
+            <span class="type-card">@Ui.Icon("check")<strong>Now</strong><span class="muted">The money moves as soon as you confirm.</span></span>
+        </label>
+        <label class="type-option">
+            <input type="radio" name="When" value="later" checked="@later" />
+            <span class="type-card">@Ui.Icon("calendar")<strong>On a date</strong><span class="muted">Pick a day, once or on repeat.</span></span>
+        </label>
+    </div>
+    <div class="schedule-fields" data-schedule-fields hidden="@(!later)">
+        <div class="field">
+            <label for="RunDate">First payment date</label>
+            <input id="RunDate" name="RunDate" type="date" class="input" min="@tomorrow" value="@(Model.RunDate?.ToString("yyyy-MM-dd") ?? tomorrow)" />
+        </div>
+        <div class="field">
+            <label for="Frequency">Repeat</label>
+            <select id="Frequency" name="Frequency" class="select">
+                @foreach (var f in Enum.GetValues<ScheduleFrequency>())
+                {
+                    <option value="@f" selected="@(Model.Frequency == f)">@ScheduledPaymentService.FrequencyLabel(f)</option>
+                }
+            </select>
+        </div>
+        <p class="hint schedule-hint">We check your balance on the day. If there isn't enough, the payment is paused and we tell you.</p>
+    </div>
+</fieldset>

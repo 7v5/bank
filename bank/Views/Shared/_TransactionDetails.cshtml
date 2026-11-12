@@ -5,14 +5,14 @@
 }
 <div class="tx-detail">
     <div class="tx-detail-hero">
-        <span class="tx-icon cat-@Model.Category" style="width:56px;height:56px;border-radius:var(--r-lg)">@Ui.Icon(Ui.TransactionIcon(Model), "icon-lg")</span>
+        <span class="tx-icon tx-icon-xl cat-@Model.Category">@Ui.Icon(Ui.TransactionIcon(Model), "icon-lg")</span>
         <div class="tx-detail-amt num @(isIn ? "pos" : "")">@Money.Signed(Model.Amount)</div>
         <div class="tx-detail-title">@Ui.TransactionTitle(Model)</div>
         <div class="muted">@Model.PostedUtc.ToLocalTime().ToString("dddd, MMMM d, yyyy 'at' h:mm tt", Money.Culture)</div>
     </div>
     <dl class="detail-list">
         <dt>Type</dt><dd>@Ui.TypeLabel(Model.Type)</dd>
-        <dt>Category</dt><dd><span class="chip cat-@Model.Category" style="background:color-mix(in srgb,var(--c) 14%,transparent);color:var(--ink)">@Model.Category</span></dd>
+        <dt>Category</dt><dd><span class="chip chip-cat cat-@Model.Category">@Model.Category</span></dd>
         <dt>Account</dt><dd>@Model.BankAccount.Name <span class="muted">@Model.BankAccount.MaskedNumber</span></dd>
         @if (related is not null)
         {
@@ -31,6 +31,11 @@
     </dl>
     <div class="tx-detail-actions">
         <a class="btn btn-secondary btn-block" href="/Accounts/Details/@Model.BankAccountId">Open @Model.BankAccount.Name</a>
+        @if (Model.Amount < 0 && Model.Type is TransactionType.Purchase or TransactionType.BillPayment)
+        {
+            var half = decimal.Round(-Model.Amount / 2, 2).ToString(System.Globalization.CultureInfo.InvariantCulture);
+            <a class="btn btn-secondary btn-block" href="/Requests/Create?amount=@half&note=@Uri.EscapeDataString($"Half of {Ui.TransactionTitle(Model)}")">@Ui.Icon("request", "icon-sm")Split this with someone</a>
+        }
         @if (ViewBag.CounterpartyHandle is string handle)
         {
             <a class="btn btn-primary btn-block" href="/Money/Send?to=%40@handle">@(Model.Type == TransactionType.P2PReceived ? $"Send money to {Model.CounterpartyName}" : $"Send {Model.CounterpartyName} money again")</a>

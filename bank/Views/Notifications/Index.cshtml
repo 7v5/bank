@@ -2,33 +2,59 @@
 @{
     ViewData["Title"] = "Notifications";
     var now = (DateTime)ViewBag.Now;
+    var tab = (string)ViewBag.Tab;
+    var unread = (int)ViewBag.UnreadCount;
+    var groups = Model.GroupBy(n => Ui.DayLabel(n.CreatedUtc, now));
 }
 <div class="page-head">
-    <div><h1>Notifications</h1><p>Payments you receive, requests and account updates.</p></div>
-    @if (Model.Any(n => !n.IsRead))
+    <div><h1>Notifications</h1><p>Payments you receive, requests, scheduled payments and security alerts.</p></div>
+    @if (unread > 0)
     {
         <form asp-action="ReadAll" method="post"><button class="btn btn-secondary" type="submit">@Ui.Icon("check", "icon-sm")Mark all as read</button></form>
     }
 </div>
-<section class="card" style="padding:6px">
+
+<nav class="segmented tabs-seg" aria-label="Notification lists">
+    <a asp-route-tab="" aria-current="@(tab == "all" ? "page" : null)">All</a>
+    <a asp-route-tab="unread" aria-current="@(tab == "unread" ? "page" : null)">Unread <span class="num">(@unread)</span></a>
+</nav>
+
+<section class="card notif-card">
     @if (Model.Count == 0)
     {
-        <div class="empty"><div class="empty-icon">@Ui.Icon("bell")</div><h3>You're all caught up</h3><p>New activity will show up here.</p></div>
+        <div class="empty">
+            <div class="empty-icon">@Ui.Icon("bell")</div>
+            <h3>You're all caught up</h3>
+            <p>New activity will show up here.</p>
+            <a class="btn btn-primary" asp-controller="Transactions" asp-action="Index">View all activity</a>
+        </div>
     }
     else
     {
-        <div class="notif-page">
-            @foreach (var n in Model)
-            {
-                <a class="notif @(n.IsRead ? "" : "unread")" href="@(n.Link ?? "#")">
-                    <span class="tx-icon" style="--c:var(--primary)">@Ui.Icon(n.Icon, "icon-sm")</span>
-                    <span>
-                        <span class="notif-title">@n.Title@if (!n.IsRead) { <span class="sr-only"> (unread)</span> }</span>
-                        <span class="notif-body">@n.Body</span>
-                        <span class="notif-time">@Ui.Ago(n.CreatedUtc, now)</span>
-                    </span>
-                </a>
-            }
-        </div>
+        @foreach (var g in groups)
+        {
+            <h2 class="notif-day">@g.Key</h2>
+            <div class="notif-page">
+                @foreach (var n in g)
+                {
+                    <div class="notif-row @(n.IsRead ? "" : "unread")">
+                        <a class="notif @(n.IsRead ? "" : "unread")" href="@(n.Link ?? Url.Action("Index", "Dashboard"))">
+                            <span class="tx-icon tx-icon-primary">@Ui.Icon(n.Icon, "icon-sm")</span>
+                            <span>
+                                <span class="notif-title">@n.Title@if (!n.IsRead) { <span class="sr-only"> (unread)</span> }</span>
+                                <span class="notif-body">@n.Body</span>
+                                <span class="notif-time">@Ui.Ago(n.CreatedUtc, now)</span>
+                            </span>
+                        </a>
+                        @if (!n.IsRead)
+                        {
+                            <form asp-action="Read" asp-route-id="@n.Id" asp-route-tab="@(tab == "unread" ? "unread" : null)" method="post">
+                                <button type="submit" class="btn btn-ghost btn-icon btn-sm" aria-label="Mark as read: @n.Title" data-tip="Mark as read">@Ui.Icon("check", "icon-sm")</button>
+                            </form>
+                        }
+                    </div>
+                }
+            </div>
+        }
     }
 </section>

@@ -1,0 +1,25 @@
+@model BudgetStatus
+@{
+    // One budget with a still progress bar. Pass ViewData["Actions"] = true to show Remove.
+    var actions = ViewData["Actions"] as bool? == true;
+}
+<article class="budget cat-@Model.Category @(Model.IsOver ? "is-over" : "")">
+    <span class="tx-icon cat-@Model.Category">@Ui.Icon(Ui.CategoryIcon(Model.Category), "icon-sm")</span>
+    <div class="budget-main">
+        <div class="budget-top">
+            <strong>@Model.Category</strong>
+            @if (Model.IsOver) { <span class="chip chip-warn">@Ui.Icon("alert", "icon-sm")Over by @Money.Format(-Model.Left)</span> }
+            else if (Model.IsNear) { <span class="chip chip-warn">Nearly used</span> }
+            else { <span class="muted num">@Money.Format(Model.Left) left</span> }
+        </div>
+        <span class="progress" role="progressbar" aria-valuenow="@Model.Percent" aria-valuemin="0" aria-valuemax="100" aria-label="@Model.Category budget used"><span style="width:@Model.Percent%"></span></span>
+        <small class="muted num">@Money.Format(Model.Spent) of @Money.Format(Model.Limit) used</small>
+    </div>
+    @if (actions)
+    {
+        <form asp-controller="Budgets" asp-action="Remove" asp-route-id="@Model.Id" method="post">
+            <button type="submit" class="btn btn-danger btn-icon btn-sm" aria-label="Remove @Model.Category budget" data-tip="Remove budget"
+                    data-confirm-title="Remove the @Model.Category budget?" data-confirm="We'll stop tracking this limit. Your transactions aren't affected." data-confirm-ok="Remove budget">@Ui.Icon("trash", "icon-sm")</button>
+        </form>
+    }
+</article>

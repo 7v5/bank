@@ -83,6 +83,12 @@ builder.Services.AddScoped<ITransactionQueryService, TransactionQueryService>();
 builder.Services.AddScoped<IInsightsService, InsightsService>();
 builder.Services.AddScoped<IAuditService, DbAuditService>();
 builder.Services.AddScoped<IAdminService, AdminService>();
+builder.Services.AddScoped<IScheduledPaymentService, ScheduledPaymentService>();
+builder.Services.AddScoped<IBudgetService, BudgetService>();
+builder.Services.AddScoped<IStatementService, StatementService>();
+builder.Services.AddScoped<IInterestService, InterestService>();
+// Makes scheduled payments, pays interest and sends budget alerts in the background.
+builder.Services.AddHostedService<BankClockRunner>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<SimpleBankMvc.Infrastructure.ShellContext>();
 

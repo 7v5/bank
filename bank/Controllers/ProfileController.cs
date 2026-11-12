@@ -28,14 +28,84 @@ public class ChangePasswordViewModel
 
 /// <summary>Profile and security settings. Available to customers and admins.</summary>
 [Authorize]
-public class ProfileController(ApplicationDbContext db, UserManager<ApplicationUser> users, SignInManager<ApplicationUser> signIn, IAuditService audit) : Controller
+public class ProfileController(ApplicationDbContext db, UserManager<ApplicationUser> users, SignInManager<ApplicationUser> signIn, IAuditService audit,
+    INotificationService notifications) : Controller
 {
     private string Uid => User.UserId();
+
+    /// <summary>Everything the page shows besides the details form: password form, security events and two-step state.</summary>
+    private async Task FillSecurityAsync()
+    {
+        ViewBag.Password = new ChangePasswordViewModel();
+        ViewBag.Events = await audit.SecurityEventsAsync(Uid, 8);
+        var user = await users.GetUserAsync(User);
+        ViewBag.TwoStepOn = user?.TwoFactorEnabled == true;
+        // The setup key is only shown while setup is in progress, and recovery codes only once.
+        if (user is not null && TempData["TwoStepSetup"] is not null)
+        {
+            var key = await users.GetAuthenticatorKeyAsync(user) ?? "";
+            ViewBag.SetupKey = string.Join(" ", Enumerable.Range(0, (key.Length + 3) / 4).Select(i => key.Substring(i * 4, Math.Min(4, key.Length - i * 4)))).ToLowerInvariant();
+        }
+        ViewBag.RecoveryCodes = (TempData["RecoveryCodes"] as string)?.Split(',');
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> StartTwoStep()
+    {
+        var user = await users.GetUserAsync(User);
+        if (user is null) return Challenge();
+        if (!user.TwoFactorEnabled)
+        {
+            await users.ResetAuthenticatorKeyAsync(user); // also refreshes the security stamp
+            await signIn.RefreshSignInAsync(user);
+            TempData["TwoStepSetup"] = "1";
+        }
+        return Redirect(Url.Action(nameof(Index)) + "#security");
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> ConfirmTwoStep(string? code)
+    {
+        var user = await users.GetUserAsync(User);
+        if (user is null) return Challenge();
+        var clean = (code ?? "").Replace(" ", "").Replace("-", "");
+        if (!await users.VerifyTwoFactorTokenAsync(user, users.Options.Tokens.AuthenticatorTokenProvider, clean))
+        {
+            TempData["TwoStepSetup"] = "1";
+            TempData["Error"] = "That code didn't match";
+            TempData["ErrorBody"] = "Enter the newest 6-digit code from your authenticator app.";
+            return Redirect(Url.Action(nameof(Index)) + "#security");
+        }
+        await users.SetTwoFactorEnabledAsync(user, true);
+        var codes = await users.GenerateNewTwoFactorRecoveryCodesAsync(user, 10);
+        await signIn.RefreshSignInAsync(user);
+        await audit.LogAsync(user.Id, "security.two-step-on", "User", user.Id, "Turned on two-step sign-in");
+        notifications.Add(user.Id, "Two-step sign-in is on", "You'll be asked for a code from your authenticator app each time you sign in.", "shield", "/Profile#security");
+        await db.SaveChangesAsync();
+        TempData["RecoveryCodes"] = string.Join(",", codes ?? []);
+        TempData["Success"] = "Two-step sign-in is on";
+        return Redirect(Url.Action(nameof(Index)) + "#security");
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> StopTwoStep()
+    {
+        var user = await users.GetUserAsync(User);
+        if (user is null) return Challenge();
+        await users.SetTwoFactorEnabledAsync(user, false);
+        await users.ResetAuthenticatorKeyAsync(user);
+        await signIn.RefreshSignInAsync(user);
+        await audit.LogAsync(user.Id, "security.two-step-off", "User", user.Id, "Turned off two-step sign-in");
+        notifications.Add(user.Id, "Two-step sign-in is off", "If you didn't turn it off, change your password and turn it back on.", "shield", "/Profile#security");
+        await db.SaveChangesAsync();
+        TempData["Success"] = "Two-step sign-in is off";
+        return Redirect(Url.Action(nameof(Index)) + "#security");
+    }
 
     public async Task<IActionResult> Index()
     {
         var u = await db.Users.AsNoTracking().SingleAsync(x => x.Id == Uid);
-        ViewBag.Password = new ChangePasswordViewModel();
+        await FillSecurityAsync();
         return View(new ProfileViewModel { FullName = u.FullName, Handle = u.Handle, ThemePreference = u.ThemePreference, Email = u.Email, CreatedUtc = u.CreatedUtc });
     }
 
@@ -47,7 +117,7 @@ public class ProfileController(ApplicationDbContext db, UserManager<ApplicationU
             ModelState.AddModelError(nameof(vm.Handle), "That handle is taken.");
         if (!ModelState.IsValid)
         {
-            ViewBag.Password = new ChangePasswordViewModel();
+            await FillSecurityAsync();
             vm.Email = User.Identity?.Name;
             return View(vm);
         }
@@ -72,14 +142,16 @@ public class ProfileController(ApplicationDbContext db, UserManager<ApplicationU
             {
                 await signIn.RefreshSignInAsync(user);
                 await audit.LogAsync(user.Id, "auth.password-changed", "User", user.Id, "Changed password");
+                notifications.Add(user.Id, "Your password was changed", "If you didn't change it, contact us right away.", "shield", "/Profile#security");
+                await db.SaveChangesAsync();
                 TempData["Success"] = "Password changed";
-                return RedirectToAction(nameof(Index));
+                return Redirect(Url.Action(nameof(Index)) + "#security");
             }
             foreach (var e in result.Errors) ModelState.AddModelError("", e.Description);
         }
         TempData["Error"] = "Password not changed";
         TempData["ErrorBody"] = string.Join(" ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
-        return RedirectToAction(nameof(Index));
+        return Redirect(Url.Action(nameof(Index)) + "#security");
     }
 }
 
@@ -87,10 +159,20 @@ public class ProfileController(ApplicationDbContext db, UserManager<ApplicationU
 [Authorize]
 public class NotificationsController(INotificationService notifications, TimeProvider clock) : Controller
 {
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index(string? tab)
     {
         ViewBag.Now = clock.GetUtcNow().UtcDateTime;
-        return View(await notifications.RecentAsync(User.UserId(), 100));
+        var all = await notifications.RecentAsync(User.UserId(), 100);
+        ViewBag.Tab = tab == "unread" ? "unread" : "all";
+        ViewBag.UnreadCount = all.Count(n => !n.IsRead);
+        return View(tab == "unread" ? all.Where(n => !n.IsRead).ToList() : all);
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> Read(int id, string? tab)
+    {
+        await notifications.MarkReadAsync(User.UserId(), id);
+        return RedirectToAction(nameof(Index), new { tab });
     }
 
     [HttpPost]

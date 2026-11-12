@@ -1,0 +1,59 @@
+@model ScheduledPayment
+@{
+    // One scheduled payment. Pass ViewData["Actions"] = true to show Pause / Resume / Cancel.
+    var actions = ViewData["Actions"] as bool? == true;
+    var title = Model.Kind == ScheduleKind.Bill ? $"Pay {Model.Payee?.Name}" : $"Transfer to {Model.ToAccount?.Name}";
+    var icon = Model.Kind == ScheduleKind.Bill ? "receipt" : "swap";
+    var ended = Model.Status is ScheduleStatus.Completed or ScheduleStatus.Cancelled;
+    var (chip, word) = Model.Status switch
+    {
+        ScheduleStatus.Active => ("chip-pos", "Active"),
+        ScheduleStatus.Paused => ("chip-warn", "Paused"),
+        ScheduleStatus.Completed => ("", "Finished"),
+        _ => ("", "Cancelled")
+    };
+}
+<article class="sched">
+    <span class="tx-icon">@Ui.Icon(icon)</span>
+    <div class="sched-main">
+        <strong>@title</strong>
+        <span class="muted">From @Model.FromAccount.Name. @ScheduledPaymentService.FrequencyLabel(Model.Frequency).</span>
+        @if (actions && Model.Status == ScheduleStatus.Paused && Model.LastResult is not null)
+        {
+            <span class="sched-note">@Model.LastResult</span>
+        }
+    </div>
+    <div class="sched-when">
+        <strong class="num">@Money.Format(Model.Amount)</strong>
+        @if (ended)
+        {
+            <span class="chip @chip">@word</span>
+        }
+        else
+        {
+            <span class="muted num">@(Model.Status == ScheduleStatus.Paused ? "Was due" : "Next") @Model.NextRunDate.ToString("MMM d, yyyy", Money.Culture)</span>
+            @if (actions || Model.Status == ScheduleStatus.Paused) { <span class="chip @chip">@word</span> }
+        }
+    </div>
+    @if (actions && !ended)
+    {
+        <div class="sched-actions">
+            @if (Model.Status == ScheduleStatus.Active)
+            {
+                <form asp-controller="Scheduled" asp-action="Pause" asp-route-id="@Model.Id" method="post">
+                    <button type="submit" class="btn btn-secondary btn-sm" aria-label="Pause: @title">@Ui.Icon("pause", "icon-sm")Pause</button>
+                </form>
+            }
+            else
+            {
+                <form asp-controller="Scheduled" asp-action="Resume" asp-route-id="@Model.Id" method="post">
+                    <button type="submit" class="btn btn-secondary btn-sm" aria-label="Resume: @title">@Ui.Icon("play", "icon-sm")Resume</button>
+                </form>
+            }
+            <form asp-controller="Scheduled" asp-action="Cancel" asp-route-id="@Model.Id" method="post">
+                <button type="submit" class="btn btn-danger btn-sm" aria-label="Cancel: @title"
+                        data-confirm-title="Cancel this scheduled payment?" data-confirm="@title for @Money.Format(Model.Amount) won't be made again. Payments already made stay in Activity." data-confirm-ok="Cancel payment">@Ui.Icon("x", "icon-sm")Cancel</button>
+            </form>
+        </div>
+    }
+</article>

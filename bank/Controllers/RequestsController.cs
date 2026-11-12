@@ -1,9 +1,11 @@
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SimpleBankMvc.Data;
 using SimpleBankMvc.Models;
 using SimpleBankMvc.Services;
+using SimpleBankMvc.ViewModels;
 
 namespace SimpleBankMvc.Controllers;
 
@@ -24,7 +26,7 @@ public class PayRequestViewModel
 }
 
 /// <summary>Ask other customers for money, and pay or decline what they ask of you.</summary>
-public class RequestsController(ApplicationDbContext db, IMoneyRequestService requests) : CustomerController
+public class RequestsController(ApplicationDbContext db, IMoneyRequestService requests, TimeProvider clock) : CustomerController
 {
     public async Task<IActionResult> Index(string? tab)
     {
@@ -34,7 +36,13 @@ public class RequestsController(ApplicationDbContext db, IMoneyRequestService re
         return View();
     }
 
-    public IActionResult Create(string? from) => View(new RequestMoneyViewModel { Payer = from ?? "" });
+    /// <summary>The form can arrive filled in, for example from "Split this" on a transaction.</summary>
+    public IActionResult Create(string? from, decimal? amount, string? note) => View(new RequestMoneyViewModel
+    {
+        Payer = from ?? "",
+        Amount = amount is > 0 and <= 5000 ? decimal.Round(amount.Value, 2) : null,
+        Note = note is { Length: > 140 } ? note[..140] : note
+    });
 
     [HttpPost]
     public async Task<IActionResult> Create(RequestMoneyViewModel vm)
@@ -52,18 +60,21 @@ public class RequestsController(ApplicationDbContext db, IMoneyRequestService re
     {
         var vm = await FillPay(new PayRequestViewModel(), id);
         if (vm.Request is null) return NotFound();
-        vm.FromAccountId = vm.Accounts.FirstOrDefault(a => a.IsPrimary)?.Id ?? vm.Accounts.FirstOrDefault()?.Id ?? 0;
+        vm.FromAccountId = vm.Accounts.FirstOrDefault(a => a.IsPrimary && !a.IsBlocked)?.Id ?? vm.Accounts.FirstOrDefault(a => !a.IsBlocked)?.Id ?? 0;
         return View(vm);
     }
 
     [HttpPost]
     public async Task<IActionResult> Pay(int id, PayRequestViewModel vm)
     {
-        if (await TryBankAsync(() => requests.PayAsync(Uid, id, vm.FromAccountId, vm.IdempotencyKey)))
+        PostingResult? result = null;
+        if (await TryBankAsync(async () => result = await requests.PayAsync(Uid, id, vm.FromAccountId, vm.IdempotencyKey)))
         {
             var r = await db.MoneyRequests.AsNoTracking().Include(x => x.Requester).SingleAsync(x => x.Id == id);
-            Flash($"Paid {r.Requester.FirstName} {Money.Format(r.Amount)}");
-            return RedirectToAction(nameof(Index));
+            var from = await db.BankAccounts.AsNoTracking().Where(a => a.Id == vm.FromAccountId && a.OwnerId == Uid).Select(a => a.Name).SingleOrDefaultAsync();
+            TempData["Receipt"] = JsonSerializer.Serialize(new ReceiptViewModel("Send", $"Paid {r.Requester.FirstName}", r.Amount, from,
+                $"{r.Requester.FullName} (@{r.Requester.Handle})", r.Note, result!.Reference, result.NewBalance, clock.GetUtcNow().UtcDateTime, vm.FromAccountId));
+            return RedirectToAction("Done", "Money");
         }
         await FillPay(vm, id);
         if (vm.Request is null) return NotFound();

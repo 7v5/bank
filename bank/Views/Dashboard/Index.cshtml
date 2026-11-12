@@ -148,6 +148,35 @@
                 </ul>
             </section>
         }
+        <section class="card card-pad" aria-labelledby="up-h">
+            <div class="card-head">
+                <h2 id="up-h">Upcoming payments</h2>
+                <a class="link" asp-controller="Scheduled" asp-action="Index">View scheduled payments</a>
+            </div>
+            @if (Model.Upcoming.Count == 0)
+            {
+                <p class="muted">Nothing is scheduled.</p>
+                <a class="btn btn-secondary btn-sm" asp-controller="Money" asp-action="Transfer">@Ui.Icon("calendar", "icon-sm")Schedule a transfer</a>
+            }
+            else
+            {
+                <div class="sched-compact">@foreach (var s in Model.Upcoming) { <partial name="_ScheduleRow" model="s" /> }</div>
+            }
+        </section>
+        <section class="card card-pad" aria-labelledby="budget-h">
+            <div class="card-head">
+                <h2 id="budget-h">Budgets this month</h2>
+                <a class="link" asp-controller="Budgets" asp-action="Index">@(Model.Budgets.Count == 0 ? "Set a budget" : "Manage budgets")</a>
+            </div>
+            @if (Model.Budgets.Count == 0)
+            {
+                <p class="muted">Set a monthly limit for groceries, dining or any other kind of spending, and track it here.</p>
+            }
+            else
+            {
+                <div class="budget-list budget-compact">@foreach (var b in Model.Budgets.Take(4)) { <partial name="_BudgetRow" model="b" /> }</div>
+            }
+        </section>
         <section class="card card-pad" aria-labelledby="flow-h">
             <div class="card-head"><h2 id="flow-h">Money in and out, last 6 months</h2></div>
             <div class="chart-box chart-mid"><div class="skeleton chart-skeleton"></div><canvas id="cashflow-chart" aria-label="Bar chart of money in and money out per month" role="img"></canvas></div>

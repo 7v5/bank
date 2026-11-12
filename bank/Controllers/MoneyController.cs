@@ -8,7 +8,7 @@ using SimpleBankMvc.ViewModels;
 namespace SimpleBankMvc.Controllers;
 
 /// <summary>Deposit, withdraw, transfer between your own accounts, and send to another customer.</summary>
-public class MoneyController(ApplicationDbContext db, IBankingService banking, TimeProvider clock) : CustomerController
+public class MoneyController(ApplicationDbContext db, IBankingService banking, IScheduledPaymentService schedules, TimeProvider clock) : CustomerController
 {
     public IActionResult Index() => View();
 
@@ -38,7 +38,7 @@ public class MoneyController(ApplicationDbContext db, IBankingService banking, T
     public Task<IActionResult> Transfer(int? from, int? to) => Form(new MoneyFormViewModel { Kind = MoneyKind.Transfer, FromAccountId = from, ToAccountId = to });
 
     [HttpPost]
-    public Task<IActionResult> Transfer(MoneyFormViewModel vm) => Submit(vm, MoneyKind.Transfer, async () =>
+    public Task<IActionResult> Transfer(MoneyFormViewModel vm) => vm.IsScheduled ? ScheduleTransfer(vm) : Submit(vm, MoneyKind.Transfer, async () =>
     {
         var r = await banking.TransferAsync(Uid, vm.FromAccountId ?? 0, vm.ToAccountId ?? 0, vm.Amount!.Value, vm.Memo, vm.IdempotencyKey);
         return new ReceiptViewModel("Transfer", "Transfer complete", vm.Amount.Value, await AccountName(vm.FromAccountId),
@@ -60,6 +60,21 @@ public class MoneyController(ApplicationDbContext db, IBankingService banking, T
             return new ReceiptViewModel("Send", $"Sent to {recipient?.FirstName}", vm.Amount.Value, await AccountName(vm.FromAccountId),
                 $"{recipient?.FullName} (@{recipient?.Handle})", vm.Memo, r.Reference, r.NewBalance, Now, vm.FromAccountId);
         });
+    }
+
+    /// <summary>"On a date" was chosen: save the transfer as a scheduled payment instead of moving money now.</summary>
+    private async Task<IActionResult> ScheduleTransfer(MoneyFormViewModel vm)
+    {
+        vm.Kind = MoneyKind.Transfer;
+        if (vm.RunDate is null) ModelState.AddModelError("", "Choose a date for the transfer.");
+        if (ModelState.IsValid && await TryBankAsync(() => schedules.CreateAsync(Uid, Models.ScheduleKind.Transfer, vm.FromAccountId ?? 0, vm.ToAccountId,
+                null, vm.Amount!.Value, vm.Memo, vm.RunDate!.Value, vm.Frequency)))
+        {
+            Flash("Transfer scheduled", $"{Money.Format(vm.Amount!.Value)} on {vm.RunDate:MMMM d, yyyy}. {ScheduledPaymentService.FrequencyLabel(vm.Frequency)}.");
+            return RedirectToAction("Index", "Scheduled");
+        }
+        await Fill(vm);
+        return View("Flow", vm);
     }
 
     // ---------- Receipt ----------

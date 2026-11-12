@@ -36,6 +36,7 @@ public static class Ui
         TransactionType.Deposit when t.Category == TransactionCategory.Cash => "arrow-down",
         TransactionType.Withdrawal => "cash",
         TransactionType.AdminAdjustment => "shield",
+        TransactionType.Interest => "vault",
         _ => CategoryIcon(t.Category)
     };
 
@@ -48,6 +49,7 @@ public static class Ui
         TransactionType.P2PReceived => "Received",
         TransactionType.Purchase => "Card purchase",
         TransactionType.AdminAdjustment => "Adjustment",
+        TransactionType.Interest => "Interest",
         _ => t.ToString()
     };
 

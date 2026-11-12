@@ -21,6 +21,11 @@
         <span><strong>Pay a bill</strong><span>Utilities, rent and other saved payees.</span></span>
         @Ui.Icon("chevron-right")
     </a>
+    <a class="hub-item" asp-controller="Scheduled" asp-action="Index">
+        <span class="tx-icon">@Ui.Icon("calendar", "icon-lg")</span>
+        <span><strong>Scheduled payments</strong><span>See, pause or cancel payments set for a date.</span></span>
+        @Ui.Icon("chevron-right")
+    </a>
     <a class="hub-item" asp-controller="BillPay" asp-action="Index">
         <span class="tx-icon">@Ui.Icon("building", "icon-lg")</span>
         <span><strong>Manage payees</strong><span>Add or remove the companies you pay.</span></span>
@@ -30,7 +35,7 @@
     <h2 class="hub-group">Your own accounts</h2>
     <a class="hub-item" asp-action="Transfer">
         <span class="tx-icon">@Ui.Icon("swap", "icon-lg")</span>
-        <span><strong>Transfer</strong><span>Between your own accounts, instantly.</span></span>
+        <span><strong>Transfer</strong><span>Between your own accounts, now or on a date.</span></span>
         @Ui.Icon("chevron-right")
     </a>
     <a class="hub-item" asp-action="Deposit">

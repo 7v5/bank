@@ -13,6 +13,8 @@ public class DashboardViewModel
     public decimal MonthIn { get; init; }
     public decimal MonthOut { get; init; }
     public decimal? BalanceChange30d { get; init; }
+    public List<BudgetStatus> Budgets { get; init; } = [];
+    public List<ScheduledPayment> Upcoming { get; init; } = [];
     public decimal Total => Accounts.Sum(a => a.Balance);
 }
 
@@ -46,7 +48,15 @@ public class RenameAccountViewModel
 public enum MoneyKind { Deposit, Withdraw, Transfer, Send }
 
 /// <summary>One form model for all four money flows; each flow uses the fields it needs.</summary>
-public class MoneyFormViewModel
+/// <summary>Form fields for "pay now or on a date". Rendered by Views/Shared/_ScheduleFields.</summary>
+public interface IScheduleInput
+{
+    string? When { get; }
+    DateOnly? RunDate { get; }
+    ScheduleFrequency Frequency { get; }
+}
+
+public class MoneyFormViewModel : IScheduleInput
 {
     public MoneyKind Kind { get; set; }
 
@@ -64,6 +74,12 @@ public class MoneyFormViewModel
     /// <summary>Generated when the form is rendered; a replayed post is rejected by the service.</summary>
     public Guid IdempotencyKey { get; set; } = Guid.NewGuid();
 
+    // Scheduling (transfers only): "later" means make it on RunDate instead of now.
+    public string? When { get; set; }
+    public DateOnly? RunDate { get; set; }
+    public ScheduleFrequency Frequency { get; set; }
+    public bool IsScheduled => When == "later";
+
     // Display data
     public List<BankAccount> Accounts { get; set; } = [];
     public decimal SentToday { get; set; }
@@ -76,3 +92,11 @@ public record ReceiptViewModel(
 
 /// <summary>Model for the shared, AJAX-swappable transaction list + pager partial.</summary>
 public record TransactionResultsModel(PagedResult<Transaction> Results, TransactionQuery Query, string Action, int? RouteId = null, bool ShowAccount = false, bool ShowOwner = false);
+
+// ---------- Shared flow partial models (Views/Shared/_FlowSteps, _AmountField, _AccountPicker) ----------
+public record FlowStepsModel(string[] Labels, int Current = 1);
+
+public record AmountFieldModel(decimal? Value, decimal[] Quick, string? Hint = null);
+
+public record AccountPickerModel(string Field, string Legend, List<BankAccount> Accounts, int? Selected,
+    bool BlockFrozen = true, string FrozenText = "Frozen, can't pay from it");

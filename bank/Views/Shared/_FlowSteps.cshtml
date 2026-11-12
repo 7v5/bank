@@ -1,0 +1,12 @@
+@model FlowStepsModel
+@* Progress list shared by every multi-step form. The last step shows a check mark. *@
+<ol class="steps" aria-label="Progress">
+    @for (var i = 0; i < Model.Labels.Length; i++)
+    {
+        var n = i + 1;
+        var last = n == Model.Labels.Length;
+        <li class="@(n == Model.Current ? "is-current" : n < Model.Current ? "is-done" : null)" data-step-dot="@n" aria-current="@(n == Model.Current ? "step" : null)">
+            <span>@if (last) { @Ui.Icon("check", "icon-sm") } else { @n }</span>@Model.Labels[i]
+        </li>
+    }
+</ol>

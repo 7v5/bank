@@ -1,0 +1,26 @@
+@model LoginCodeViewModel
+@{
+    ViewData["Title"] = "Enter your sign-in code";
+    Layout = "_AuthLayout";
+}
+<div class="auth-card">
+    <h1>Enter your sign-in code</h1>
+    <p class="auth-lede">Open your authenticator app and enter the 6-digit code for SimpleBank. Lost your phone? Enter one of your recovery codes instead.</p>
+
+    <form asp-action="LoginCode" method="post" class="form" novalidate>
+        <input type="hidden" asp-for="ReturnUrl" />
+        <input type="hidden" asp-for="RememberMe" />
+        <div asp-validation-summary="ModelOnly" class="form-errors"></div>
+        <div class="field">
+            <label asp-for="Code">Code</label>
+            <div class="input-wrap">
+                @Ui.Icon("shield")
+                <input asp-for="Code" class="input num" autocomplete="one-time-code" inputmode="text" autofocus placeholder="123456" maxlength="20" />
+            </div>
+            <span asp-validation-for="Code" class="field-error"></span>
+        </div>
+        <button type="submit" class="btn btn-primary btn-lg btn-block">Verify and sign in</button>
+    </form>
+
+    <p class="auth-switch"><a asp-action="Login">Back to sign in</a></p>
+</div>

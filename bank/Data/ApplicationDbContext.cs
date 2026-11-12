@@ -13,6 +13,8 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<Notification> Notifications => Set<Notification>();
     public DbSet<ProcessedRequest> ProcessedRequests => Set<ProcessedRequest>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+    public DbSet<ScheduledPayment> ScheduledPayments => Set<ScheduledPayment>();
+    public DbSet<Budget> Budgets => Set<Budget>();
 
     protected override void ConfigureConventions(ModelConfigurationBuilder c)
     {
@@ -23,6 +25,9 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
         c.Properties<TransactionType>().HaveConversion<string>().HaveMaxLength(20);
         c.Properties<TransactionCategory>().HaveConversion<string>().HaveMaxLength(20);
         c.Properties<MoneyRequestStatus>().HaveConversion<string>().HaveMaxLength(20);
+        c.Properties<ScheduleKind>().HaveConversion<string>().HaveMaxLength(20);
+        c.Properties<ScheduleFrequency>().HaveConversion<string>().HaveMaxLength(20);
+        c.Properties<ScheduleStatus>().HaveConversion<string>().HaveMaxLength(20);
     }
 
     protected override void OnModelCreating(ModelBuilder b)
@@ -59,6 +64,23 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
         {
             e.HasOne(x => x.User).WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Cascade);
             e.HasIndex(x => new { x.UserId, x.IsRead, x.CreatedUtc });
+        });
+
+        b.Entity<ScheduledPayment>(e =>
+        {
+            e.HasOne(x => x.Owner).WithMany().HasForeignKey(x => x.OwnerId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(x => x.FromAccount).WithMany().HasForeignKey(x => x.FromAccountId).OnDelete(DeleteBehavior.Restrict);
+            e.HasOne(x => x.ToAccount).WithMany().HasForeignKey(x => x.ToAccountId).OnDelete(DeleteBehavior.Restrict);
+            // Removing a payee removes the payments scheduled to it.
+            e.HasOne(x => x.Payee).WithMany().HasForeignKey(x => x.PayeeId).OnDelete(DeleteBehavior.Cascade);
+            e.HasIndex(x => new { x.Status, x.NextRunDate });
+            e.HasIndex(x => new { x.OwnerId, x.Status });
+        });
+
+        b.Entity<Budget>(e =>
+        {
+            e.HasOne(x => x.Owner).WithMany().HasForeignKey(x => x.OwnerId).OnDelete(DeleteBehavior.Cascade);
+            e.HasIndex(x => new { x.OwnerId, x.Category }).IsUnique();
         });
 
         b.Entity<AuditLog>(e =>

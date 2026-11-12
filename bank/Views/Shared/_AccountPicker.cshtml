@@ -1,0 +1,16 @@
+@model AccountPickerModel
+<fieldset class="acct-pick-group">
+    <legend class="label">@Model.Legend</legend>
+    @foreach (var a in Model.Accounts)
+    {
+        var blocked = Model.BlockFrozen && a.IsBlocked;
+        <label class="acct-pick @Ui.AccountTone(a.Type) @(blocked ? "is-frozen" : "")">
+            <input type="radio" name="@Model.Field" value="@a.Id" checked="@(Model.Selected == a.Id && !blocked)" data-balance="@a.Balance.ToString(System.Globalization.CultureInfo.InvariantCulture)" data-name="@a.Name" disabled="@blocked" />
+            <span class="acct-pick-card">
+                <span class="acct-tile">@Ui.Icon(Ui.AccountIcon(a), "icon-sm")</span>
+                <span class="acct-pick-main"><strong>@a.Name</strong><small class="muted num">@(blocked ? (a.IsFrozen ? Model.FrozenText : "Locked by you, unlock it to pay from it") : $"{Ui.AccountTypeLabel(a.Type)} {a.MaskedNumber}")</small></span>
+                <span class="num acct-pick-bal">@Money.Format(a.Balance)</span>
+            </span>
+        </label>
+    }
+</fieldset>

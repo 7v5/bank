@@ -1,0 +1,50 @@
+@model List<BudgetStatus>
+@{
+    ViewData["Title"] = "Budgets";
+    var month = DateTime.Now.ToString("MMMM", Money.Culture);
+    var actions = new ViewDataDictionary(ViewData) { ["Actions"] = true };
+}
+<div class="page-head">
+    <div><h1>Budgets</h1><p>Set a monthly limit for a kind of spending and see how much of it you've used in @month. We tell you when you reach 90%.</p></div>
+    <a class="btn btn-secondary" asp-controller="Transactions" asp-action="Index" asp-route-flow="out">@Ui.Icon("list", "icon-sm")View spending in Activity</a>
+</div>
+
+<div class="budget-layout">
+    <section class="card" aria-labelledby="budgets-h">
+        <div class="panel-head"><h2 id="budgets-h">Your budgets for @month</h2><span class="muted">@Model.Count set</span></div>
+        @if (Model.Count == 0)
+        {
+            <div class="empty">
+                <div class="empty-icon">@Ui.Icon("chart")</div>
+                <h3>No budgets yet</h3>
+                <p>Pick a category and a monthly limit to start tracking it.</p>
+                <a class="btn btn-primary" href="#budget-form">Set your first budget</a>
+            </div>
+        }
+        else
+        {
+            <div class="budget-list">
+                @foreach (var b in Model) { <partial name="_BudgetRow" model="b" view-data="actions" /> }
+            </div>
+        }
+    </section>
+
+    <form asp-action="Set" method="post" class="card card-pad form" id="budget-form" novalidate>
+        <h2>Set a budget</h2>
+        <div class="field">
+            <label for="category">Category</label>
+            <select id="category" name="category" class="select">
+                @foreach (var c in BudgetService.Categories) { <option value="@c">@c</option> }
+            </select>
+            <span class="hint">Choosing a category that already has a budget changes its limit.</span>
+        </div>
+        <div class="field">
+            <label for="monthlyLimit">Monthly limit</label>
+            <div class="input-wrap">
+                <span class="handle-at" aria-hidden="true">$</span>
+                <input id="monthlyLimit" name="monthlyLimit" class="input num input-dollar" inputmode="decimal" placeholder="300.00" type="text" required />
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary">Save budget</button>
+    </form>
+</div>

@@ -1,0 +1,39 @@
+@model List<ScheduledPayment>
+@{
+    ViewData["Title"] = "Scheduled payments";
+    var open = Model.Where(s => s.Status is ScheduleStatus.Active or ScheduleStatus.Paused).ToList();
+    var ended = Model.Where(s => s.Status is ScheduleStatus.Completed or ScheduleStatus.Cancelled).Take(10).ToList();
+    var actions = new ViewDataDictionary(ViewData) { ["Actions"] = true };
+}
+<div class="page-head">
+    <div><h1>Scheduled payments</h1><p>Transfers and bill payments you asked us to make on a date. Each one is paid on its day, and you get a notification when it goes out.</p></div>
+    <div class="row">
+        <a class="btn btn-secondary" asp-controller="BillPay" asp-action="Pay">@Ui.Icon("receipt", "icon-sm")Schedule a bill</a>
+        <a class="btn btn-primary" asp-controller="Money" asp-action="Transfer">@Ui.Icon("swap", "icon-sm")Schedule a transfer</a>
+    </div>
+</div>
+
+@if (open.Count == 0)
+{
+    <div class="card empty">
+        <div class="empty-icon">@Ui.Icon("calendar")</div>
+        <h3>Nothing scheduled</h3>
+        <p>Set up a transfer to savings every month, or pay a bill on its due date. Choose "On a date" when you fill in the payment.</p>
+        <a class="btn btn-primary" asp-controller="Money" asp-action="Transfer">Schedule a transfer</a>
+    </div>
+}
+else
+{
+    <section class="card sched-list" aria-labelledby="open-h">
+        <div class="panel-head"><h2 id="open-h">Upcoming</h2><span class="muted">@open.Count scheduled</span></div>
+        @foreach (var s in open) { <partial name="_ScheduleRow" model="s" view-data="actions" /> }
+    </section>
+}
+
+@if (ended.Count > 0)
+{
+    <section class="card sched-list sched-ended" aria-labelledby="ended-h">
+        <div class="panel-head"><h2 id="ended-h">Finished and cancelled</h2></div>
+        @foreach (var s in ended) { <partial name="_ScheduleRow" model="s" view-data="actions" /> }
+    </section>
+}

@@ -7,7 +7,8 @@ using SimpleBankMvc.ViewModels;
 
 namespace SimpleBankMvc.Controllers;
 
-public class AccountsController(ApplicationDbContext db, IBankingService banking, ITransactionQueryService ledger, TimeProvider clock) : CustomerController
+public class AccountsController(ApplicationDbContext db, IBankingService banking, ITransactionQueryService ledger, IStatementService statements,
+    IInterestService interest, IAuditService audit, TimeProvider clock) : CustomerController
 {
     public async Task<IActionResult> Index()
     {
@@ -29,6 +30,10 @@ public class AccountsController(ApplicationDbContext db, IBankingService banking
 
         var since = clock.GetUtcNow().UtcDateTime.AddDays(-30);
         var last30 = await db.Transactions.Where(t => t.BankAccountId == id && t.PostedUtc >= since).Select(t => t.Amount).ToListAsync();
+        var rate = InterestService.RateFor(account.Type);
+        ViewBag.InterestRate = rate;
+        ViewBag.InterestYtd = rate > 0 ? await interest.PaidThisYearAsync(id) : 0m;
+        ViewBag.InterestNext = InterestService.MonthlyInterest(account.Balance, rate);
         return View(new AccountDetailsViewModel
         {
             Account = account, History = history, Query = query,
@@ -66,6 +71,33 @@ public class AccountsController(ApplicationDbContext db, IBankingService banking
     {
         if (await TryBankAsync(() => banking.SetPrimaryAsync(Uid, id))) Flash("Primary account updated", "Money people send you will land here.");
         else FlashError("Couldn't change your primary account", ModelState[""]?.Errors.FirstOrDefault()?.ErrorMessage);
+        return RedirectToAction(nameof(Details), new { id });
+    }
+
+    /// <summary>A month's statement for one account. Printing the page gives a paper copy or a PDF.</summary>
+    public async Task<IActionResult> Statement(int id, string? month)
+    {
+        var account = await db.BankAccounts.AsNoTracking().SingleOrDefaultAsync(a => a.Id == id && a.OwnerId == Uid);
+        if (account is null) return NotFound();
+        var months = statements.MonthsFor(account);
+        var chosen = DateOnly.TryParseExact(month + "-01", "yyyy-MM-dd", out var m) && months.Contains(m) ? m : months[0];
+        var statement = await statements.BuildAsync(Uid, id, chosen.Year, chosen.Month);
+        if (statement is null) return NotFound();
+        ViewBag.Months = months;
+        return View(statement);
+    }
+
+    /// <summary>The customer's own lock. It stops money leaving the account; an admin freeze is separate and stays in place.</summary>
+    [HttpPost]
+    public async Task<IActionResult> SetLock(int id, bool locked)
+    {
+        if (await TryBankAsync(() => banking.SetOwnerLockAsync(Uid, id, locked)))
+        {
+            await audit.LogAsync(Uid, locked ? "security.account-locked" : "security.account-unlocked", "BankAccount", id.ToString(),
+                locked ? "Locked an account" : "Unlocked an account");
+            Flash(locked ? "Account locked" : "Account unlocked", locked ? "No money can leave it until you unlock it." : "You can move money out again.");
+        }
+        else FlashError("Couldn't change the lock", ModelState[""]?.Errors.FirstOrDefault()?.ErrorMessage);
         return RedirectToAction(nameof(Details), new { id });
     }
 

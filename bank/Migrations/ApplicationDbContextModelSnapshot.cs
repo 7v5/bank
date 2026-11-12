@@ -313,6 +313,9 @@ namespace SimpleBankMvc.Migrations
                     b.Property<bool>("IsPrimary")
                         .HasColumnType("INTEGER");
 
+                    b.Property<bool>("LockedByOwner")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(80)
@@ -338,6 +341,35 @@ namespace SimpleBankMvc.Migrations
                     b.HasIndex("OwnerId", "IsActive");
 
                     b.ToTable("BankAccounts");
+                });
+
+            modelBuilder.Entity("SimpleBankMvc.Models.Budget", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("AlertedMonth")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("MonthlyLimit")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("OwnerId")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OwnerId", "Category")
+                        .IsUnique();
+
+                    b.ToTable("Budgets");
                 });
 
             modelBuilder.Entity("SimpleBankMvc.Models.MoneyRequest", b =>
@@ -477,6 +509,81 @@ namespace SimpleBankMvc.Migrations
                     b.ToTable("ProcessedRequests");
                 });
 
+            modelBuilder.Entity("SimpleBankMvc.Models.ScheduledPayment", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("Amount")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("CreatedUtc")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Frequency")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("FromAccountId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("LastResult")
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("LastRunUtc")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Memo")
+                        .HasMaxLength(140)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateOnly>("NextRunDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("OwnerId")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("PayeeId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("RunCount")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateOnly>("StartDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("ToAccountId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FromAccountId");
+
+                    b.HasIndex("PayeeId");
+
+                    b.HasIndex("ToAccountId");
+
+                    b.HasIndex("OwnerId", "Status");
+
+                    b.HasIndex("Status", "NextRunDate");
+
+                    b.ToTable("ScheduledPayments");
+                });
+
             modelBuilder.Entity("SimpleBankMvc.Models.Transaction", b =>
                 {
                     b.Property<long>("Id")
@@ -590,6 +697,17 @@ namespace SimpleBankMvc.Migrations
                     b.Navigation("Owner");
                 });
 
+            modelBuilder.Entity("SimpleBankMvc.Models.Budget", b =>
+                {
+                    b.HasOne("SimpleBankMvc.Models.ApplicationUser", "Owner")
+                        .WithMany()
+                        .HasForeignKey("OwnerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Owner");
+                });
+
             modelBuilder.Entity("SimpleBankMvc.Models.MoneyRequest", b =>
                 {
                     b.HasOne("SimpleBankMvc.Models.ApplicationUser", "Payer")
@@ -629,6 +747,39 @@ namespace SimpleBankMvc.Migrations
                         .IsRequired();
 
                     b.Navigation("Owner");
+                });
+
+            modelBuilder.Entity("SimpleBankMvc.Models.ScheduledPayment", b =>
+                {
+                    b.HasOne("SimpleBankMvc.Models.BankAccount", "FromAccount")
+                        .WithMany()
+                        .HasForeignKey("FromAccountId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("SimpleBankMvc.Models.ApplicationUser", "Owner")
+                        .WithMany()
+                        .HasForeignKey("OwnerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("SimpleBankMvc.Models.Payee", "Payee")
+                        .WithMany()
+                        .HasForeignKey("PayeeId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.HasOne("SimpleBankMvc.Models.BankAccount", "ToAccount")
+                        .WithMany()
+                        .HasForeignKey("ToAccountId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("FromAccount");
+
+                    b.Navigation("Owner");
+
+                    b.Navigation("Payee");
+
+                    b.Navigation("ToAccount");
                 });
 
             modelBuilder.Entity("SimpleBankMvc.Models.Transaction", b =>

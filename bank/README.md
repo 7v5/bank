@@ -39,7 +39,13 @@ dotnet test
 - Accounts: open Checking, Savings or **Goal** accounts (with a target and a progress ring); rename, set primary, close (balance must be $0). Account numbers are masked, with reveal and copy.
 - Money: **Deposit**, **Withdraw**, **Transfer** between your accounts, **Send** to another user by `@handle` or email (live search), each as a details → review → receipt flow.
 - **Requests**: ask someone for money; they pay (one tap) or decline; you can cancel.
-- **Bill pay**: saved payees, pay from any account.
+- **Bill pay**: saved payees (add, edit, remove), paid from any account through the same Details, Review, Done flow as Move money.
+- **Scheduled payments**: transfers and bill payments on a future date, once, weekly or monthly. A background service (`BankClockRunner`) makes them on the day with a per-date idempotency key, so one occurrence can never post twice. A payment that can't be made is paused and the customer is notified. Pause, resume or cancel from the Scheduled page.
+- **Budgets**: a monthly limit per spending category, with progress on Home and one alert when 90% is used.
+- **Statements and export**: a monthly statement per account (opening and closing balance, printable or saved as PDF) and a CSV download of whatever the Activity filters show.
+- **Interest**: savings (2%) and goal (2.5%) accounts earn interest, paid monthly by the background service and never twice for the same month.
+- **Security**: customers can lock their own account (separate from an admin freeze, which they can't lift), turn on two-step sign-in with an authenticator app and recovery codes, and see recent sign-ins. A sign-in from a new address, a password change and a new payee each send a notification.
+- **Split a purchase**: "Split this with someone" in a transaction's details opens Request money with half the amount filled in.
 - **Activity**: every transaction with server-side **pagination** (10/25/50), filters (account, type, category, direction, date range), text search and sorting. Results update in place, and each row opens a detail drawer.
 - Notifications: a bell with an unread badge, polled through the API. A toast appears and balances update live when someone pays you.
 - Profile: name, handle, theme (light/dark/system), change password.

@@ -5,11 +5,13 @@
 }
 <a class="back-link" asp-action="Index">@Ui.Icon("arrow-left", "icon-sm") Requests</a>
 <div class="narrow">
+    <div class="page-head"><div><h1>Pay @r.Requester.FirstName</h1><p>Choose the account to pay from. Nothing moves until you confirm.</p></div></div>
+    <partial name="_FlowSteps" model='new FlowStepsModel(["Review", "Done"])' />
     <form asp-action="Pay" asp-route-id="@r.Id" method="post" class="card flow-card form" novalidate>
         <input type="hidden" asp-for="IdempotencyKey" />
         <div class="review">
-            <span class="avatar avatar-lg" style="--c:@r.Requester.AvatarColor;margin:0 auto 8px" aria-hidden="true">@r.Requester.Initials</span>
-            <h1 style="font-size:1.2rem">@r.Requester.FullName asked you for</h1>
+            <span class="avatar avatar-lg review-avatar" style="--c:@r.Requester.AvatarColor" aria-hidden="true">@r.Requester.Initials</span>
+            <h2 class="review-who">@r.Requester.FullName asked you for</h2>
             <div class="review-amount num">@Money.Format(r.Amount)</div>
             @if (r.Note is not null) { <p class="request-note">“@r.Note”</p> }
         </div>
@@ -17,23 +19,11 @@
         @if (r.Status != MoneyRequestStatus.Pending)
         {
             <div class="alert alert-info">@Ui.Icon("info")<span>This request is already @r.Status.ToString().ToLowerInvariant().</span></div>
+            <a class="btn btn-secondary btn-lg btn-block" asp-action="Index">Back to requests</a>
         }
         else
         {
-            <fieldset class="acct-pick-group">
-                <legend class="label">Pay from</legend>
-                @foreach (var a in Model.Accounts)
-                {
-                    <label class="acct-pick @Ui.AccountTone(a.Type) @(a.IsFrozen ? "is-frozen" : "")">
-                        <input type="radio" name="FromAccountId" value="@a.Id" checked="@(Model.FromAccountId == a.Id)" disabled="@a.IsFrozen" />
-                        <span class="acct-pick-card">
-                            <span class="acct-tile">@Ui.Icon(Ui.AccountIcon(a), "icon-sm")</span>
-                            <span class="acct-pick-main"><strong>@a.Name</strong><small class="muted num">@(a.IsFrozen ? "Frozen, can't pay from it" : $"{Ui.AccountTypeLabel(a.Type)} {a.MaskedNumber}")</small></span>
-                            <span class="num acct-pick-bal">@Money.Format(a.Balance)</span>
-                        </span>
-                    </label>
-                }
-            </fieldset>
+            <partial name="_AccountPicker" model='new AccountPickerModel("FromAccountId", "Pay from", Model.Accounts, Model.FromAccountId)' />
             <div class="flow-actions">
                 <a class="btn btn-secondary btn-lg" asp-action="Index">Back to requests</a>
                 <button type="submit" class="btn btn-primary btn-lg">Pay @Money.Format(r.Amount)</button>

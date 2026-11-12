@@ -24,6 +24,9 @@
         MoneyKind.Send => new[] { 10m, 25m, 50m, 100m },
         _ => new[] { 50m, 100m, 250m, 1000m }
     };
+    var sendHint = Model.Kind == MoneyKind.Send
+        ? $"You can send {Money.Format(Math.Max(0, remaining))} more today. The limit is {Money.Format(BankingService.DailySendLimit)} per 24 hours."
+        : null;
 }
 <a class="back-link" asp-controller="Money" asp-action="Index">@Ui.Icon("arrow-left", "icon-sm") Move money</a>
 
@@ -32,11 +35,7 @@
         <div><h1>@title</h1><p>@lede</p></div>
     </div>
 
-    <ol class="steps" aria-label="Progress">
-        <li class="is-current" data-step-dot="1"><span>1</span>Details</li>
-        <li data-step-dot="2"><span>2</span>Review</li>
-        <li data-step-dot="3"><span>@Ui.Icon("check", "icon-sm")</span>Done</li>
-    </ol>
+    <partial name="_FlowSteps" model='new FlowStepsModel(["Details", "Review", "Done"])' />
 
     <form asp-action="@Model.Kind" method="post" class="card flow-card" novalidate data-money-form data-no-loading>
         <input type="hidden" asp-for="IdempotencyKey" />
@@ -67,58 +66,23 @@
                 </div>
             }
 
-            <div class="amount-field">
-                <label for="Amount" class="label">Amount</label>
-                <div class="amount-input-wrap" onclick="this.querySelector('input').focus()">
-                    <span class="currency" aria-hidden="true">$</span>
-                    <input asp-for="Amount" class="amount-input" type="text" inputmode="decimal" placeholder="0" autocomplete="off" value="@Model.Amount?.ToString("0.##")" />
-                </div>
-                <span asp-validation-for="Amount" class="field-error"></span>
-                @if (Model.Kind == MoneyKind.Send)
-                {
-                    <p class="hint">You can send <strong class="num">@Money.Format(Math.Max(0, remaining))</strong> more today (limit @Money.Format(BankingService.DailySendLimit) per 24 hours).</p>
-                }
-                <div class="quick-amounts" role="group" aria-label="Quick amounts">
-                    @foreach (var q in quick) { <button type="button" data-amount="@q" aria-label="Use @Money.Format(q)">@Money.Format(q).Replace(".00", "")</button> }
-                </div>
-            </div>
+            <partial name="_AmountField" model="new AmountFieldModel(Model.Amount, quick, sendHint)" />
 
             <div class="acct-picks @(needsFrom && needsTo ? "two" : "")">
                 @if (needsFrom)
                 {
-                    <fieldset class="acct-pick-group">
-                        <legend class="label">From</legend>
-                        @foreach (var a in Model.Accounts)
-                        {
-                            <label class="acct-pick @Ui.AccountTone(a.Type) @(a.IsFrozen ? "is-frozen" : "")">
-                                <input type="radio" name="FromAccountId" value="@a.Id" checked="@(Model.FromAccountId == a.Id)" data-balance="@a.Balance.ToString(System.Globalization.CultureInfo.InvariantCulture)" data-name="@a.Name" disabled="@a.IsFrozen" />
-                                <span class="acct-pick-card">
-                                    <span class="acct-tile">@Ui.Icon(Ui.AccountIcon(a), "icon-sm")</span>
-                                    <span class="acct-pick-main"><strong>@a.Name</strong><small class="muted num">@(a.IsFrozen ? "Frozen, can't send from it" : $"{Ui.AccountTypeLabel(a.Type)} {a.MaskedNumber}")</small></span>
-                                    <span class="num acct-pick-bal">@Money.Format(a.Balance)</span>
-                                </span>
-                            </label>
-                        }
-                    </fieldset>
+                    <partial name="_AccountPicker" model='new AccountPickerModel("FromAccountId", "From", Model.Accounts, Model.FromAccountId, FrozenText: "Frozen, can&#39;t send from it")' />
                 }
                 @if (needsTo)
                 {
-                    <fieldset class="acct-pick-group">
-                        <legend class="label">To</legend>
-                        @foreach (var a in Model.Accounts)
-                        {
-                            <label class="acct-pick @Ui.AccountTone(a.Type)">
-                                <input type="radio" name="ToAccountId" value="@a.Id" checked="@(Model.ToAccountId == a.Id)" data-balance="@a.Balance.ToString(System.Globalization.CultureInfo.InvariantCulture)" data-name="@a.Name" />
-                                <span class="acct-pick-card">
-                                    <span class="acct-tile">@Ui.Icon(Ui.AccountIcon(a), "icon-sm")</span>
-                                    <span class="acct-pick-main"><strong>@a.Name</strong><small class="muted num">@Ui.AccountTypeLabel(a.Type) @a.MaskedNumber</small></span>
-                                    <span class="num acct-pick-bal">@Money.Format(a.Balance)</span>
-                                </span>
-                            </label>
-                        }
-                    </fieldset>
+                    <partial name="_AccountPicker" model='new AccountPickerModel("ToAccountId", "To", Model.Accounts, Model.ToAccountId, BlockFrozen: false)' />
                 }
             </div>
+
+            @if (Model.Kind == MoneyKind.Transfer)
+            {
+                <partial name="_ScheduleFields" model="Model" />
+            }
 
             <div class="field">
                 <label asp-for="Memo">@(Model.Kind == MoneyKind.Send ? "What's it for?" : "Note") <span class="optional">(optional)</span></label>
@@ -139,12 +103,13 @@
                     @if (needsFrom) { <dt>From</dt><dd data-review-from></dd> }
                     @if (needsTo) { <dt>@(Model.Kind == MoneyKind.Deposit ? "Into" : "To")</dt><dd data-review-to></dd> }
                     <dt>Note</dt><dd data-review-memo></dd>
-                    <dt data-review-after-label>Balance after</dt><dd class="num" data-review-after></dd>
+                    <dt data-review-now data-review-after-label>Balance after</dt><dd class="num" data-review-now data-review-after></dd>
+                    <dt data-review-later hidden>When</dt><dd data-review-later data-review-when hidden></dd>
                 </dl>
             </div>
             <div class="flow-actions">
                 <button type="button" class="btn btn-secondary btn-lg" data-back>@Ui.Icon("arrow-left", "icon-sm")Edit details</button>
-                <button type="submit" class="btn btn-primary btn-lg" data-confirm-submit>@cta <span class="num" data-cta-amount></span></button>
+                <button type="submit" class="btn btn-primary btn-lg" data-confirm-submit><span data-review-now>@cta</span><span data-review-later hidden>Schedule</span> <span class="num" data-cta-amount></span></button>
             </div>
         </div>
     </form>

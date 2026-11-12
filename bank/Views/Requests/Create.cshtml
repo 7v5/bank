@@ -3,35 +3,51 @@
     ViewData["Title"] = "Request money";
 }
 <a class="back-link" asp-action="Index">@Ui.Icon("arrow-left", "icon-sm") Requests</a>
-<div class="narrow">
-    <div class="page-head"><div><h1>Request money</h1><p>They'll get a notification and can pay you with one tap.</p></div></div>
-    <form asp-action="Create" method="post" class="card flow-card form" novalidate>
-        <div asp-validation-summary="ModelOnly" class="form-errors"></div>
-        <div class="field">
-            <label asp-for="Payer">Who should pay you?</label>
-            <div class="input-wrap">
-                @Ui.Icon("user")
-                <input asp-for="Payer" class="input" placeholder="&#64;handle or email" autocomplete="off" autocapitalize="off" spellcheck="false" autofocus />
+<div class="narrow flow" data-flow="request">
+    <div class="page-head"><div><h1>Request money</h1><p>Ask another SimpleBank customer to pay you. They get a notification and can pay or decline.</p></div></div>
+    <partial name="_FlowSteps" model='new FlowStepsModel(["Details", "Review", "Sent"])' />
+    <form asp-action="Create" method="post" class="card flow-card" novalidate data-money-form data-no-loading>
+        <div class="flow-step" data-step="1">
+            <div asp-validation-summary="ModelOnly" class="form-errors"></div>
+            <div class="field recipient-field">
+                <label asp-for="Payer">Who should pay you?</label>
+                <div class="recipient-picked" data-recipient-picked hidden></div>
+                <div class="input-wrap recipient-search" data-recipient-search>
+                    @Ui.Icon("search")
+                    <input asp-for="Payer" class="input" placeholder="Search by name, &#64;handle or email" autocomplete="off" autocapitalize="off" spellcheck="false"
+                           role="combobox" aria-expanded="false" aria-controls="recipient-results" aria-autocomplete="list" />
+                    <ul class="recipient-results popover" id="recipient-results" role="listbox"></ul>
+                </div>
+                <span class="hint">Try &#64;alice, &#64;bob, &#64;carol or &#64;dave.</span>
+                <span asp-validation-for="Payer" class="field-error"></span>
             </div>
-            <span class="hint">Try &#64;alice, &#64;bob, &#64;carol or &#64;dave.</span>
-            <span asp-validation-for="Payer" class="field-error"></span>
-        </div>
-        <div class="amount-field">
-            <label for="Amount" class="label">Amount</label>
-            <div class="amount-input-wrap" onclick="this.querySelector('input').focus()">
-                <span class="currency" aria-hidden="true">$</span>
-                <input asp-for="Amount" class="amount-input" type="text" inputmode="decimal" placeholder="0" autocomplete="off" value="@Model.Amount?.ToString("0.##")" />
+
+            <partial name="_AmountField" model="new AmountFieldModel(Model.Amount, [10m, 20m, 50m, 100m])" />
+
+            <div class="field">
+                <label asp-for="Note">What's it for? <span class="optional">(optional)</span></label>
+                <input asp-for="Note" class="input" maxlength="140" placeholder="For example, concert tickets" />
+                <span class="hint">They'll see this note with your request.</span>
             </div>
-            <span asp-validation-for="Amount" class="field-error"></span>
-            <div class="quick-amounts">
-                @foreach (var q in new[] { 10, 20, 50, 100 }) { <button type="button" data-amount="@q">$@q</button> }
+            <button type="submit" class="btn btn-primary btn-lg btn-block" data-to-review>Review request</button>
+        </div>
+
+        <div class="flow-step" data-step="2" hidden>
+            <div class="review">
+                <span class="muted">Check the details. They aren't asked until you send it.</span>
+                <div class="review-amount num" data-review-amount>$0.00</div>
+                <dl class="detail-list">
+                    <dt>Asking</dt><dd data-review-recipient></dd>
+                    <dt>Note</dt><dd data-review-memo></dd>
+                </dl>
+            </div>
+            <div class="flow-actions">
+                <button type="button" class="btn btn-secondary btn-lg" data-back>@Ui.Icon("arrow-left", "icon-sm")Edit details</button>
+                <button type="submit" class="btn btn-primary btn-lg" data-confirm-submit>Request <span class="num" data-cta-amount></span></button>
             </div>
         </div>
-        <div class="field">
-            <label asp-for="Note">What's it for? <span class="optional">(optional)</span></label>
-            <input asp-for="Note" class="input" maxlength="140" placeholder="For example, concert tickets" />
-            <span class="hint">They'll see this note with your request.</span>
-        </div>
-        <button type="submit" class="btn btn-primary btn-lg btn-block">Send request</button>
     </form>
 </div>
+@section Scripts {
+    <script type="module" src="~/js/money-flow.js" asp-append-version="true"></script>
+}

@@ -35,14 +35,9 @@ public class AccountController(
 
         var result = await signIn.PasswordSignInAsync(vm.Email.Trim(), vm.Password, vm.RememberMe, lockoutOnFailure: true);
         var user = await users.FindByEmailAsync(vm.Email.Trim());
-        if (result.Succeeded && user is not null)
-        {
-            await audit.LogAsync(user.Id, "auth.login", "User", user.Id, "Signed in");
-            if (Url.IsLocalUrl(vm.ReturnUrl)) return LocalRedirect(vm.ReturnUrl);
-            return await users.IsInRoleAsync(user, DbInitializer.AdminRole)
-                ? RedirectToAction("Index", "Dashboard", new { area = "Admin" })
-                : RedirectToAction("Index", "Dashboard");
-        }
+        if (result.Succeeded && user is not null) return await FinishSignInAsync(user, vm.ReturnUrl);
+        // Password was right, but this customer turned on two-step sign-in: ask for the code next.
+        if (result.RequiresTwoFactor) return RedirectToAction(nameof(LoginCode), new { returnUrl = vm.ReturnUrl, rememberMe = vm.RememberMe });
 
         if (result.IsLockedOut)
         {
@@ -54,6 +49,56 @@ public class AccountController(
             ModelState.AddModelError("", "That email and password don't match.");
         }
         return View(vm);
+    }
+
+    [HttpGet, AllowAnonymous]
+    public async Task<IActionResult> LoginCode(string? returnUrl = null, bool rememberMe = false)
+    {
+        if (await signIn.GetTwoFactorAuthenticationUserAsync() is null) return RedirectToAction(nameof(Login));
+        return View(new LoginCodeViewModel { ReturnUrl = returnUrl, RememberMe = rememberMe });
+    }
+
+    [HttpPost, AllowAnonymous, EnableRateLimiting("login")]
+    public async Task<IActionResult> LoginCode(LoginCodeViewModel vm)
+    {
+        var user = await signIn.GetTwoFactorAuthenticationUserAsync();
+        if (user is null) return RedirectToAction(nameof(Login));
+        if (!ModelState.IsValid) return View(vm);
+
+        var code = vm.Code.Replace(" ", "").Replace("-", "");
+        // Six digits is an authenticator code; anything else is treated as a one-time recovery code.
+        var result = code.Length == 6 && code.All(char.IsDigit)
+            ? await signIn.TwoFactorAuthenticatorSignInAsync(code, vm.RememberMe, rememberClient: false)
+            : await signIn.TwoFactorRecoveryCodeSignInAsync(code);
+        if (result.Succeeded) return await FinishSignInAsync(user, vm.ReturnUrl);
+
+        if (result.IsLockedOut)
+        {
+            await audit.LogAsync(user.Id, "auth.lockout", "User", user.Id, "Too many failed sign-in codes");
+            ModelState.AddModelError("", "This account is locked after too many attempts. Try again in a few minutes.");
+        }
+        else
+        {
+            ModelState.AddModelError("", "That code didn't work. Codes change every 30 seconds, so try the newest one.");
+        }
+        return View(vm);
+    }
+
+    /// <summary>Records the sign-in, warns the customer if it came from a new address, and sends them to the right home page.</summary>
+    private async Task<IActionResult> FinishSignInAsync(ApplicationUser user, string? returnUrl)
+    {
+        var newAddress = await audit.IsNewSignInAddressAsync(user.Id);
+        await audit.LogAsync(user.Id, "auth.login", "User", user.Id, "Signed in");
+        if (newAddress)
+        {
+            notifications.Add(user.Id, "New sign-in to your account",
+                "You signed in from an address we haven't seen before. If that wasn't you, change your password.", "shield", "/Profile#security");
+            await db.SaveChangesAsync();
+        }
+        if (Url.IsLocalUrl(returnUrl)) return LocalRedirect(returnUrl);
+        return await users.IsInRoleAsync(user, DbInitializer.AdminRole)
+            ? RedirectToAction("Index", "Dashboard", new { area = "Admin" })
+            : RedirectToAction("Index", "Dashboard");
     }
 
     [HttpGet, AllowAnonymous]
