@@ -17,7 +17,7 @@
             <span class="acct-tile acct-tile-lg">@Ui.Icon(Ui.AccountIcon(a), "icon-lg")</span>
             <div>
                 <h1 id="acct-h">@a.Name</h1>
-                <div class="row row-wrap" style="gap:6px;margin-top:6px">
+                <div class="row row-wrap chip-row">
                     <span class="chip chip-acct">@Ui.AccountTypeLabel(a.Type)</span>
                     @if (a.IsPrimary) { <span class="chip chip-primary">@Ui.Icon("star", "icon-sm")Primary</span> }
                     @if (a.IsFrozen) { <span class="chip chip-warn">@Ui.Icon("snowflake", "icon-sm")Frozen</span> }
@@ -98,7 +98,7 @@
     </aside>
 </div>
 
-<section class="card card-pad" aria-labelledby="hist-h" style="margin-top:var(--space-5)">
+<section class="card card-pad mt-5" aria-labelledby="hist-h">
     <div class="card-head">
         <h2 id="hist-h">Transactions</h2>
         <a class="link" asp-controller="Transactions" asp-action="Index" asp-route-accountId="@a.Id">Search and filter in Activity</a>

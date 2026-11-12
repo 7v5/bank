@@ -90,6 +90,7 @@
 .chart-tall { height: 280px; }
 .chart-mid { height: 220px; }
 .chart-skeleton { position: absolute; inset: 0; }
+.chart-donut .chart-skeleton { border-radius: 50%; }
 .chart-box canvas { position: relative; visibility: hidden; }
 .chart-box.ready canvas { visibility: visible; }
 .chart-box.ready .chart-skeleton { display: none; }
@@ -435,6 +436,7 @@
 .l-head { display: grid; gap: 8px; margin-bottom: 28px; max-width: 60ch; }
 .l-head h2 { font-size: clamp(1.6rem, 1.25rem + 1.3vw, 2.2rem); }
 .l-head p { color: var(--ink-2); }
+.l-head.l-head-tight { margin-bottom: 12px; }
 .products { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
 .product { background: var(--surface); border: 1px solid var(--line); border-top: 4px solid var(--acct); border-radius: var(--r-md); padding: 22px; display: grid; gap: 10px; align-content: start; }
 .product-head { display: flex; align-items: center; gap: 12px; }

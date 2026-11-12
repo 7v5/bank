@@ -13,8 +13,8 @@
     <button type="button" class="tx" data-tx="@Model.Id" aria-label="@Ui.TransactionTitle(Model), @Money.Signed(Model.Amount). Show details">
         <span class="tx-icon cat-@Model.Category">@Ui.Icon(Ui.TransactionIcon(Model))</span>
         <span class="tx-main">
-            <span class="tx-title" style="display:block">@Ui.TransactionTitle(Model)</span>
-            <span class="tx-sub" style="display:block">@string.Join(", ", sub.Where(s => s.Length > 0))</span>
+            <span class="tx-title block">@Ui.TransactionTitle(Model)</span>
+            <span class="tx-sub block">@string.Join(", ", sub.Where(s => s.Length > 0))</span>
         </span>
         <span class="tx-amt @(isIn ? "in" : "")">
             @Money.Signed(Model.Amount)

@@ -32,7 +32,7 @@
 
 @if (locked)
 {
-    <div class="alert alert-neg" style="margin-bottom:var(--space-4)">@Ui.Icon("lock")<span>This customer can't sign in until you unlock them.</span></div>
+    <div class="alert alert-neg mb-4">@Ui.Icon("lock")<span>This customer can't sign in until you unlock them.</span></div>
 }
 
 <div class="acct-grid">
@@ -41,7 +41,7 @@
         <article class="card card-pad admin-acct @Ui.AccountTone(a.Type) @(a.IsActive ? "" : "is-closed")">
             <div class="row">
                 <span class="acct-tile">@Ui.Icon(Ui.AccountIcon(a), "icon-sm")</span>
-                <div style="flex:1;min-width:0"><strong>@a.Name</strong><div class="muted num" style="font-size:.84rem">@Ui.AccountTypeLabel(a.Type) @a.AccountNumber</div></div>
+                <div class="grow"><strong>@a.Name</strong><div class="muted num text-sm">@Ui.AccountTypeLabel(a.Type) @a.AccountNumber</div></div>
                 @if (a.IsFrozen) { <span class="chip chip-warn">@Ui.Icon("snowflake", "icon-sm")Frozen</span> }
                 @if (a.LockedByOwner) { <span class="chip chip-warn">@Ui.Icon("lock", "icon-sm")Locked by customer</span> }
                 @if (!a.IsActive) { <span class="chip">Closed</span> }
@@ -82,12 +82,12 @@
     }
 </div>
 
-<section class="card card-pad" style="margin-top:var(--space-5)">
+<section class="card card-pad mt-5">
     <div class="card-head"><h2>Transactions</h2></div>
     <div data-results-host><partial name="_TransactionResults" model="Model" /></div>
 </section>
 
-<section class="card card-pad" style="margin-top:var(--space-5)">
+<section class="card card-pad mt-5">
     <div class="card-head"><h2>Audit trail</h2></div>
     <partial name="_AuditTable" model="audit" />
 </section>

@@ -9,17 +9,17 @@
 <form class="filters card card-pad" method="get" data-filter-form role="search" aria-label="Filter ledger">
     <div class="filters-main">
         <div class="input-wrap filters-search">@Ui.Icon("search")<input class="input" type="search" name="q" value="@q.Q" placeholder="Search customer, description or reference" aria-label="Search ledger" /></div>
-        <select name="type" class="select" style="width:auto" aria-label="Type">
+        <select name="type" class="select select-auto" aria-label="Type">
             <option value="">Any type</option>
             @foreach (var t in Enum.GetValues<TransactionType>()) { <option value="@t" selected="@(q.Type == t)">@Ui.TypeLabel(t)</option> }
         </select>
-        <select name="sort" class="select" style="width:auto" aria-label="Sort">
+        <select name="sort" class="select select-auto" aria-label="Sort">
             <option value="date_desc">Newest first</option>
             <option value="amount_desc" selected="@(q.Sort == "amount_desc")">Largest amount</option>
             <option value="amount_asc" selected="@(q.Sort == "amount_asc")">Smallest amount</option>
             <option value="date_asc" selected="@(q.Sort == "date_asc")">Oldest first</option>
         </select>
-        <select name="pageSize" class="select" style="width:auto" aria-label="Per page">
+        <select name="pageSize" class="select select-auto" aria-label="Per page">
             @foreach (var s in TransactionQuery.PageSizes) { <option value="@s" selected="@(q.PageSize == s)">@s per page</option> }
         </select>
     </div>

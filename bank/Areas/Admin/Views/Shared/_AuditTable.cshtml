@@ -12,7 +12,7 @@ else
                 @foreach (var a in Model)
                 {
                     <tr>
-                        <td class="num" data-label="When" style="white-space:nowrap">@a.CreatedUtc.ToLocalTime().ToString("MMM d, h:mm tt", Money.Culture)</td>
+                        <td class="num nowrap" data-label="When">@a.CreatedUtc.ToLocalTime().ToString("MMM d, h:mm tt", Money.Culture)</td>
                         <td data-label="Who">@(a.ActorName ?? "System")</td>
                         <td data-label="Action"><span class="chip @(a.Action.StartsWith("account.") ? "chip-tan" : a.Action.Contains("lock") ? "chip-neg" : "")">@a.Action</span></td>
                         <td class="hide-sm" data-label="Details">@a.Details</td>

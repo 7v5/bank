@@ -23,7 +23,7 @@
     <a asp-route-tab="outgoing" aria-current="@(tab == "outgoing" ? "page" : null)">Sent by you <span class="num">(@outgoing.Count(r => r.Status == MoneyRequestStatus.Pending) waiting)</span></a>
 </nav>
 
-<section class="card card-pad" style="margin-top:var(--space-4)">
+<section class="card card-pad mt-4">
     @{ var list = tab == "incoming" ? incoming : outgoing; }
     @if (list.Count == 0)
     {

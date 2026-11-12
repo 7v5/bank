@@ -350,6 +350,17 @@ p { margin: 0; }
 .row { display: flex; align-items: center; gap: var(--space-3); }
 .row-wrap { flex-wrap: wrap; }
 .spacer { flex: 1; }
+/* Small layout helpers (use these instead of inline style="...") */
+.grow { flex: 1; min-width: 0; }
+.block { display: block; }
+.nowrap { white-space: nowrap; }
+.text-sm { font-size: 0.84rem; }
+.mt-4 { margin-top: var(--space-4); }
+.mt-5 { margin-top: var(--space-5); }
+.mb-4 { margin-bottom: var(--space-4); }
+.chip-row { gap: 6px; margin-top: 6px; }
+.select.select-auto { width: auto; }
+.brand-mark.brand-mark-sm { width: 28px; height: 28px; }
 
 /* ---------- Avatar ---------- */
 .avatar {
