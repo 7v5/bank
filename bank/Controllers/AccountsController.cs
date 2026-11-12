@@ -51,10 +51,16 @@ public class AccountsController(ApplicationDbContext db, IBankingService banking
         BankAccount? account = null;
         if (ModelState.IsValid && await TryBankAsync(async () => account = await banking.OpenAccountAsync(Uid, vm.Name, vm.Type, vm.GoalAmount)))
         {
-            Flash($"{account!.Name} is open", "Move some money in to get started.");
-            return RedirectToAction(nameof(Details), new { id = account.Id });
+            return RedirectToAction(nameof(Opened), new { id = account!.Id });
         }
         return View(vm);
+    }
+
+    /// <summary>Last step of the Open account flow: confirms the new account and offers the next moves.</summary>
+    public async Task<IActionResult> Opened(int id)
+    {
+        var account = await db.BankAccounts.AsNoTracking().SingleOrDefaultAsync(a => a.Id == id && a.OwnerId == Uid && a.IsActive);
+        return account is null ? NotFound() : View(account);
     }
 
     [HttpPost]

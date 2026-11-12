@@ -1,0 +1,30 @@
+@model BankAccount
+@{
+    ViewData["Title"] = $"{Model.Name} is open";
+}
+<div class="narrow flow">
+    <partial name="_FlowSteps" model='new FlowStepsModel(["Account type", "Name it", "Open"], 4)' />
+    <div class="done">
+        <div class="done-check" aria-hidden="true">@Ui.Icon("check")</div>
+        <h1>@Model.Name is open</h1>
+        <p class="muted">Your new @Ui.AccountTypeLabel(Model.Type).ToLowerInvariant() account is ready. It starts at $0.00.</p>
+
+        <div class="card card-pad receipt" aria-label="Account details">
+            <dl class="detail-list">
+                <dt>Account</dt><dd>@Model.Name</dd>
+                <dt>Type</dt><dd>@Ui.AccountTypeLabel(Model.Type)</dd>
+                <dt>Number</dt><dd class="num">@Model.MaskedNumber</dd>
+                @if (Model.GoalAmount is { } goal)
+                {
+                    <dt>Goal</dt><dd class="num">@Money.Format(goal)</dd>
+                }
+                <dt>Opened</dt><dd>@Model.OpenedUtc.ToLocalTime().ToString("MMM d, yyyy 'at' h:mm tt", Money.Culture)</dd>
+            </dl>
+        </div>
+
+        <div class="flow-actions">
+            <a class="btn btn-secondary btn-lg" asp-action="Details" asp-route-id="@Model.Id">View account</a>
+            <a class="btn btn-primary btn-lg" asp-controller="Money" asp-action="Transfer" asp-route-to="@Model.Id">Add money to it</a>
+        </div>
+    </div>
+</div>

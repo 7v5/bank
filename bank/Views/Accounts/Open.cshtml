@@ -7,49 +7,91 @@
         (Type: AccountType.Savings, Icon: "vault", Title: "Savings", Body: "Keep money set aside from what you spend."),
         (Type: AccountType.Goal, Icon: "target", Title: "Goal", Body: "Save toward a target and track your progress."),
     };
+    // After a failed post, reopen on the name step so the error is in view.
+    var start = ViewData.ModelState.IsValid ? 1 : 2;
 }
 <a class="back-link" asp-action="Index">@Ui.Icon("arrow-left", "icon-sm") Accounts</a>
-<div class="narrow">
+<div class="narrow flow">
     <div class="page-head"><div><h1>Open an account</h1><p>New accounts start at $0.00. You can have up to @BankingService.MaxOpenAccounts open at once.</p></div></div>
+    <partial name="_FlowSteps" model='new FlowStepsModel(["Account type", "Name it", "Open"], start)' />
 
-    <form asp-action="Open" method="post" class="form card card-pad" novalidate>
-        <div asp-validation-summary="ModelOnly" class="form-errors"></div>
-        <fieldset class="type-picker">
-            <legend class="label">Account type</legend>
-            @foreach (var t in types)
-            {
-                <label class="type-option @Ui.AccountTone(t.Type)">
-                    <input type="radio" name="Type" value="@t.Type" checked="@(Model.Type == t.Type)" data-goal-toggle />
-                    <span class="type-card">
-                        <span class="type-card-top"><span class="acct-tile">@Ui.Icon(t.Icon)</span><span class="check">@Ui.Icon("check")</span></span>
-                        <strong>@t.Title</strong>
-                        <span class="muted">@t.Body</span>
-                    </span>
-                </label>
-            }
-        </fieldset>
-        <div class="field">
-            <label asp-for="Name">Account name</label>
-            <input asp-for="Name" class="input" placeholder="For example, Rainy day fund" maxlength="60" autofocus />
-            <span class="hint">Only you see this name.</span>
-            <span asp-validation-for="Name" class="field-error"></span>
+    @* Without JavaScript both steps show and the form posts in one go. *@
+    <form asp-action="Open" method="post" class="card flow-card" novalidate data-open-form data-start="@start">
+        <div class="flow-step" data-step="1">
+            <fieldset class="type-picker">
+                <legend class="label">What kind of account?</legend>
+                @foreach (var t in types)
+                {
+                    <label class="type-option @Ui.AccountTone(t.Type)">
+                        <input type="radio" name="Type" value="@t.Type" checked="@(Model.Type == t.Type)" data-title="@t.Title" />
+                        <span class="type-card">
+                            <span class="type-card-top"><span class="acct-tile">@Ui.Icon(t.Icon)</span><span class="check">@Ui.Icon("check")</span></span>
+                            <strong>@t.Title</strong>
+                            <span class="muted">@t.Body</span>
+                        </span>
+                    </label>
+                }
+            </fieldset>
+            <button type="button" class="btn btn-primary btn-lg btn-block js-only" data-next>Continue</button>
         </div>
-        <div class="field" data-goal-field hidden="@(Model.Type != AccountType.Goal)">
-            <label asp-for="GoalAmount"></label>
-            <div class="input-wrap">
-                <span class="handle-at" aria-hidden="true">$</span>
-                <input asp-for="GoalAmount" class="input num input-dollar" inputmode="decimal" placeholder="2,500.00" type="text" />
+
+        <div class="flow-step" data-step="2">
+            <div asp-validation-summary="ModelOnly" class="form-errors"></div>
+            <p class="open-chosen js-only">Opening a <strong data-chosen-type>@Model.Type</strong> account.
+                <button type="button" class="btn btn-ghost btn-sm" data-back>Change</button></p>
+            <div class="field">
+                <label asp-for="Name">Account name</label>
+                <input asp-for="Name" class="input" placeholder="For example, Rainy day fund" maxlength="60" />
+                <span class="hint">Only you see this name.</span>
+                <span asp-validation-for="Name" class="field-error"></span>
             </div>
-            <span asp-validation-for="GoalAmount" class="field-error"></span>
+            <div class="field" data-goal-field hidden="@(Model.Type != AccountType.Goal)">
+                <label asp-for="GoalAmount"></label>
+                <div class="input-wrap">
+                    <span class="handle-at" aria-hidden="true">$</span>
+                    <input asp-for="GoalAmount" class="input num input-dollar" inputmode="decimal" placeholder="2,500.00" type="text" />
+                </div>
+                <span asp-validation-for="GoalAmount" class="field-error"></span>
+            </div>
+            <div class="flow-actions">
+                <button type="button" class="btn btn-secondary btn-lg js-only" data-back>@Ui.Icon("arrow-left", "icon-sm")Back</button>
+                <button type="submit" class="btn btn-primary btn-lg">Open account</button>
+            </div>
         </div>
-        <button type="submit" class="btn btn-primary btn-lg">Open account</button>
     </form>
 </div>
 @section Scripts {
     <script type="module">
-        const field = document.querySelector("[data-goal-field]");
-        document.querySelectorAll("[data-goal-toggle]").forEach((r) => r.addEventListener("change", () => {
-            field.hidden = document.querySelector("[data-goal-toggle]:checked").value !== "Goal";
-        }));
+        const form = document.querySelector("[data-open-form]");
+        const steps = [...form.querySelectorAll("[data-step]")];
+        const dots = [...document.querySelectorAll("[data-step-dot]")];
+        const goal = form.querySelector("[data-goal-field]");
+        const chosen = () => form.querySelector('[name="Type"]:checked');
+
+        function show(n) {
+            steps.forEach((s) => { s.hidden = Number(s.dataset.step) !== n; });
+            dots.forEach((d) => {
+                const i = Number(d.dataset.stepDot);
+                d.classList.toggle("is-current", i === n);
+                d.classList.toggle("is-done", i < n);
+            });
+            if (n === 2) {
+                form.querySelector("[data-chosen-type]").textContent = chosen().dataset.title.toLowerCase();
+                goal.hidden = chosen().value !== "Goal";
+                form.querySelector("#Name").focus();
+            } else {
+                chosen()?.focus();
+            }
+        }
+
+        form.classList.add("is-stepped");
+        form.querySelector("[data-next]").addEventListener("click", () => show(2));
+        form.querySelectorAll("[data-back]").forEach((b) => b.addEventListener("click", () => show(1)));
+        // Picking a type is the whole first step, so double-click or Enter moves on.
+        form.querySelectorAll('[name="Type"]').forEach((r) => r.addEventListener("dblclick", () => show(2)));
+        form.addEventListener("keydown", (e) => {
+            if (e.key === "Enter" && e.target.name === "Type") { e.preventDefault(); show(2); }
+        });
+        show(Number(form.dataset.start));
     </script>
 }
